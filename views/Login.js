@@ -1,6 +1,9 @@
-import { StyleSheet, Text, View, SafeAreaView, StatusBar, Image, TouchableOpacity,AsyncStorage } from "react-native";
+import { StyleSheet, Text, View, SafeAreaView, StatusBar, Image, TouchableOpacity } from "react-native";
 import React, { useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import LinearGradient from "react-native-linear-gradient";
+// import {LinearGradient} from 'expo-linear-gradient';
+import * as AppAuth from 'expo-app-auth';
 import { authorize  } from 'react-native-app-auth';
 import { useNavigation } from "@react-navigation/native";
 
@@ -25,10 +28,12 @@ export default Login = () => {
         checkTokenValidity();
     },[])
     async function logIn() {
+
         const config = {
             issuer: "https://accounts.spotify.com",
-            clientId: "a722f58b45744aed9214b3bbb75004b1",
-            redirectUrl: "http://localhost:3000",
+            clientId: "02b869f8d6934d8a91762da9c4bcdc2e",
+            redirectUrl: "spodyfy-ungdungnghenhac://callback",
+            clientSecret: "a2390e7185a94d93a9e31dc73c59ad68",
             scopes: [
                 "user-read-email",
                 "user-library-read",
@@ -37,12 +42,14 @@ export default Login = () => {
                 "playlist-read-private",
                 "playlist-read-collaborative",
                 "playlist-modify-public"
-            ],
+            ]
         };
 
         try {
             const result = await authorize(config);
+            console.log(result)
             if (result.accessToken) {
+                
                const expirationDate = new Date(result.accessTokenExpirationDate).getTime();
                AsyncStorage.setItem("token",result.accessToken);
                AsyncStorage.setItem("expirationDate", expirationDate.toString());
@@ -67,10 +74,10 @@ export default Login = () => {
                 </View>
                 <View style={{ width: "100%", alignItems: "center", marginTop: 50, paddingHorizontal: 30, flex: 1 }}>
                     <TouchableOpacity
-                        onPress={() => { logIn() }}
+                        onPress={logIn}
                         style={[style.loginButton]}>
                         <LinearGradient colors={["#F87275", "#c24f83"]} start={{ x: 0, y: 1 }} end={{ x: 1, y: 1 }} style={{ width: "100%", height: "100%", justifyContent: "center", alignItems: "center" }}>
-                            <Text style={[{ color: "#fff", fontSize: 20, fontWeight: "500" }]}>Sign In</Text>
+                            <Text style={[{ color: "#fff", fontSize: 20, fontWeight: "500" }]}>Start</Text>
                         </LinearGradient>
                     </TouchableOpacity>
                 </View>

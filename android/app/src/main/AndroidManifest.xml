@@ -10,9 +10,12 @@
       android:allowBackup="false"
       android:theme="@style/AppTheme"
       >
+      <!-- <meta-data
+            android:name="com.spotify.redirect_scheme"
+            android:value="${appAuthRedirectScheme}" />
       <meta-data
-            android:name="net.openid.appauth.redirect-url"
-            android:value="${appAuthRedirectScheme}://localhost:3000" />
+        android:name="com.spotify.client_id"
+        android:value="${spotifyClientId}" />     -->
       <activity
         android:name=".MainActivity"
         android:label="@string/app_name"
@@ -23,14 +26,13 @@
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
-           
+           <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="spodyfy-ungdungnghenhac"   android:host="callback" />
         </intent-filter>
-        <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="${appAuthRedirectScheme}" android:host="localhost" android:port="3000" />
-            </intent-filter>
+        
       </activity>
+    
     </application>
 </manifest>
