@@ -81,7 +81,9 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
-        manifestPlaceholders = [appAuthRedirectScheme: 'http://localhost']
+        manifestPlaceholders = [
+            appAuthRedirectScheme: "spodyfy-ungdungnghenhac",
+        ]
     }
     signingConfigs {
         debug {
