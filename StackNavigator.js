@@ -4,9 +4,11 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LinearGradient from 'react-native-linear-gradient';
 import React from 'react';
 import { StyleSheet, Text, View, Image } from 'react-native';
+
 import Login from './views/Login';
 import Home from './views/Home';
 import Profile from './views/Profile';
+import LikedSong from './views/LikedSong';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -76,6 +78,7 @@ export default Navigation = () => {
             <Stack.Navigator initialRouteName='Login' screenOptions={{ headerShown: false }}>
                 <Stack.Screen name="Login" component={Login} />
                 <Stack.Screen name="Main" component={BottomTabs} />
+                <Stack.Screen name="LikedSong" component={LikedSong} />
             </Stack.Navigator>
         </NavigationContainer>
     )

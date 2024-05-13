@@ -2,13 +2,11 @@ import { StyleSheet, Text, View, SafeAreaView, StatusBar, Image, TouchableOpacit
 import React, { useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import LinearGradient from "react-native-linear-gradient";
-// import {LinearGradient} from 'expo-linear-gradient';
-import * as AppAuth from 'expo-app-auth';
 import { authorize  } from 'react-native-app-auth';
 import { useNavigation } from "@react-navigation/native";
 
-export default Login = () => {
-    const navigation = useNavigation();
+function Login(): React.JSX.Element {
+    const navigation:any = useNavigation();
     useEffect(()=> {
         const checkTokenValidity = async ()=> {
             const accessToken = await AsyncStorage.getItem("token");
@@ -28,12 +26,11 @@ export default Login = () => {
         checkTokenValidity();
     },[])
     async function logIn() {
-
         const config = {
             issuer: "https://accounts.spotify.com",
             clientId: "02b869f8d6934d8a91762da9c4bcdc2e",
             redirectUrl: "spodyfy-ungdungnghenhac://callback",
-            clientSecret: "a2390e7185a94d93a9e31dc73c59ad68",
+            clientSecret: "622377172a9b48fd83d7ce2d25951a07",
             scopes: [
                 "user-read-email",
                 "user-library-read",
@@ -46,10 +43,11 @@ export default Login = () => {
         };
 
         try {
+            console.log("Logging")
             const result = await authorize(config);
             console.log(result)
+           
             if (result.accessToken) {
-                
                const expirationDate = new Date(result.accessTokenExpirationDate).getTime();
                AsyncStorage.setItem("token",result.accessToken);
                AsyncStorage.setItem("expirationDate", expirationDate.toString());
@@ -108,3 +106,5 @@ const style = StyleSheet.create({
         borderRadius: 40
     }
 })
+
+export default Login;
