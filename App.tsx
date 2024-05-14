@@ -26,6 +26,8 @@ import {
 } from 'react-native/Libraries/NewAppScreen';
 
 import Navigation from "./StackNavigator";
+import { ContextTrack } from './views/ContextTrack';
+
 type SectionProps = PropsWithChildren<{
   title: string;
 }>;
@@ -58,7 +60,9 @@ function Section({children, title}: SectionProps): React.JSX.Element {
 
 function App(): React.JSX.Element {
   return (
-    <Navigation />
+    <ContextTrack>
+        <Navigation />
+    </ContextTrack>
   );
 }
 
