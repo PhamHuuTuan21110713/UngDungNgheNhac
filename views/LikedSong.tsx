@@ -5,11 +5,27 @@ import { getAPI } from "../UsingAPI/CallAPI.js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { Player } from "./ContextTrack";
-import { BottomModal } from "react-native-modals";
+import { BottomModal, ModalContent } from 'react-native-modals';
+import TrackPlayer, { Capability, State, usePlaybackState,useTrackPlayerEvents,Event } from 'react-native-track-player';
 
-const SongItem = ({ item }: any) => {
+import SongPlayer from "./SongPlayer";
+
+
+
+const SongItem = ({ item,setCurrenTrack,trackIndex }: any) => {
     return (
-        <TouchableOpacity style={[style.songItem]}>
+        <TouchableOpacity 
+            onPress={async()=> {
+                setCurrenTrack(item);
+                const state = await TrackPlayer.getState();
+                if(state === State.Playing || state === State.Paused) {
+                    await TrackPlayer.stop();
+                }
+                await TrackPlayer.skip(trackIndex);
+                TrackPlayer.play();
+                
+            }}
+            style={[style.songItem]}>
             <Image style={{ width: 50, height: 50, marginRight: 10, borderRadius: 6 }} source={{ uri: item.track.album.images[0].url }} />
             <View style={{ width: "65%" }}>
                 <Text numberOfLines={1} style={{ color: "#fff", fontSize: 20, fontWeight: "bold" }}>{item.track.name}</Text>
@@ -28,12 +44,35 @@ const SongItem = ({ item }: any) => {
 }
 
 function LikedSong(): React.JSX.Element {
+    const playbackState: any = usePlaybackState();
     const navigation: any = useNavigation();
     const { currentTrack, setCurrentTrack }: any = useContext(Player);
     const [input, setInput] = useState("");
     const [savedTracks, setSavedTracks] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
+    // const [currentSong, setCurrentSong] = useState(null);
+    const [isPlaying, setIsPlaying] = useState(true);
+
+    useTrackPlayerEvents([Event.PlaybackState], async (event) => {
+        if (event.type === Event.PlaybackState) {
+            const state = await TrackPlayer.getState();
+            if(state === State.Playing) {
+                setIsPlaying(true);
+            } else if(state===State.Paused) {
+                setIsPlaying(false);
+            }
+            
+        }
+    });
+
+    useTrackPlayerEvents([Event.PlaybackTrackChanged], async (event) => {
+        if (event.type === Event.PlaybackTrackChanged && event.nextTrack !== null) {
+            const nextTrackId = event.nextTrack;
+            setCurrentTrack(savedTracks[nextTrackId]);
+        }
+    });
+
     const getSavedTracks = async () => {
         const accessToken = await AsyncStorage.getItem("token");
         const url_saveTracks = "https://api.spotify.com/v1/me/tracks?offset=0&limit=50";
@@ -48,8 +87,20 @@ function LikedSong(): React.JSX.Element {
         };
         try {
             const data_saveTracks = await getAPI(url_saveTracks, config_saveTracks);
+
+            const listTracks = data_saveTracks.items.map((item: any, index: any) => {
+                return {
+                    id: item.track.id,
+                    url: item.track.preview_url,
+                    title: item.track.name,
+                    artist: item.track.artists[0].name
+                }
+            })
+            await TrackPlayer.setupPlayer();
+            await TrackPlayer.add(listTracks);
             setSavedTracks(data_saveTracks.items);
             setIsLoading(false);
+            
         } catch (err: any) {
             console.log("Liked-Song: ", err.message);
         }
@@ -57,17 +108,23 @@ function LikedSong(): React.JSX.Element {
     useEffect(() => {
         getSavedTracks();
     }, [])
+    useEffect(()=> {
+        
+    },[])
     console.log("saved-Tracks: ", savedTracks);
 
     const playTracks = async () => {
         if (savedTracks.length > 0) {
             setCurrentTrack(savedTracks[0]);
         }
-        await play(savedTracks[0]);
+        const state = await TrackPlayer.getState();
+        if(state === State.Playing || state === State.Paused) {
+            await TrackPlayer.stop();
+        }
+        await TrackPlayer.skip(0);
+        await TrackPlayer.play();
     }
-    const play = async () => {
 
-    }
     if (isLoading) {
         return (
             <View>
@@ -105,7 +162,7 @@ function LikedSong(): React.JSX.Element {
                     <View style={{ marginTop: 25 }}>
                         {
                             savedTracks.map((item, index) => {
-                                return <SongItem item={item} key={index} />
+                                return <SongItem item={item} key={index} setCurrenTrack={setCurrentTrack} trackIndex={index}/>
                             })
                         }
                     </View>
@@ -113,21 +170,45 @@ function LikedSong(): React.JSX.Element {
             </LinearGradient>
             {
                 currentTrack && (
-                    <TouchableOpacity style={[style.currentTrack]}>
+                    <TouchableOpacity
+                        onPress={() => setModalVisible(!modalVisible)}
+                        style={[style.currentTrack]}>
                         <View>
-                            <Image style={{width:60, height:60,borderRadius:5}} source={{uri:currentTrack.track.album.images[0].url}}/>
+                            <Image style={{ width: 60, height: 60, borderRadius: 5 }} source={{ uri: currentTrack.track.album.images[0].url }} />
                         </View>
                         <View>
-                            <Text numberOfLines={1} style={{color:"#fff",fontSize:20,fontWeight:"bold"}}>{currentTrack.track.name}</Text>
-                            <Text numberOfLines={1} style={{color:"#fff", fontSize:15}}>{currentTrack.track.artists[0].name}</Text>
+                            <Text numberOfLines={1} style={{ color: "#fff", fontSize: 20, fontWeight: "bold" }}>{currentTrack.track.name}</Text>
+                            <Text numberOfLines={1} style={{ color: "#fff", fontSize: 15 }}>{currentTrack.track.artists[0].name}</Text>
                         </View>
-                        <TouchableOpacity>
-                            <Image style={{tintColor:"#fff"}} source={require("../icons/pause.png")}/>
+                        <TouchableOpacity
+                            onPress={async()=> {
+                                setIsPlaying(!isPlaying);
+                                const state = await TrackPlayer.getState();
+                                if (state === State.Playing) {
+                                    
+                                    await TrackPlayer.pause();
+                                } else if(state === State.Paused) {
+                                    await TrackPlayer.play();
+                                }
+                               
+                            }}>
+                            {
+                                isPlaying===true ?<Image style={{ tintColor: "#fff" }}  source={require("../icons/pause.png")} />
+                                    :<Image style={{ tintColor: "#fff" }}  source={require("../icons/play.png")} />
+                            }
+                            
                         </TouchableOpacity>
                     </TouchableOpacity>
                 )
             }
-            <BottomModal>
+            <BottomModal
+                visible={modalVisible}
+                onHardwareBackPress={() => setModalVisible(false)}
+                swipeDirection={["up", "down"]}
+                swipeThreshold={200}>
+                <ModalContent style={{ height: "100%", width: "100%", backgroundColor: "#453249" }}>
+                    <SongPlayer item={currentTrack} modalVisible={modalVisible} setModalVisible={setModalVisible} />
+                </ModalContent>
 
             </BottomModal>
         </>
@@ -145,16 +226,16 @@ const style = StyleSheet.create({
         alignItems: "center"
     },
     currentTrack: {
-        backgroundColor:"#38224e",
-        padding:10, 
+        backgroundColor: "#38224e",
+        padding: 10,
         position: "absolute",
-        borderRadius:10,
-        left:10,
-        right:10,
-        bottom:5,
-        flexDirection:"row",
-        alignItems:"center",
-        justifyContent:"space-between"
+        borderRadius: 10,
+        left: 10,
+        right: 10,
+        bottom: 5,
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between"
     }
 })
 export default LikedSong;
