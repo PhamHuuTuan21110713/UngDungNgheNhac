@@ -24,6 +24,7 @@ import {
   LearnMoreLinks,
   ReloadInstructions,
 } from 'react-native/Libraries/NewAppScreen';
+import {ModalPortal} from 'react-native-modals';
 
 import Navigation from "./StackNavigator";
 import { ContextTrack } from './views/ContextTrack';
@@ -61,7 +62,8 @@ function Section({children, title}: SectionProps): React.JSX.Element {
 function App(): React.JSX.Element {
   return (
     <ContextTrack>
-        <Navigation />
+      <Navigation />
+      <ModalPortal />
     </ContextTrack>
   );
 }
