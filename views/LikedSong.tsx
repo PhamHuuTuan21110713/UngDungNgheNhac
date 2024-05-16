@@ -6,24 +6,32 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { Player } from "./ContextTrack";
 import { BottomModal, ModalContent } from 'react-native-modals';
-import TrackPlayer, { Capability, State, usePlaybackState,useTrackPlayerEvents,Event } from 'react-native-track-player';
+import TrackPlayer, { Capability, State, usePlaybackState, useTrackPlayerEvents, Event } from 'react-native-track-player';
 
 import SongPlayer from "./SongPlayer";
+import Loading from "./Loading";
+import CurrentTrackBottom from "./CurrentTrackBottom";
 
+function isSameArray(array1:any,array2:any) {
+    return array1.length === array2.length && array1.every((value:any, index:any) => value === array2[index])
+}
 
-
-const SongItem = ({ item,setCurrenTrack,trackIndex }: any) => {
+const SongItem = ({ item, setCurrenTrack, trackIndex ,savedTracks,currentList,setCurrentList ,setContentTracksPlayer}: any) => {
     return (
-        <TouchableOpacity 
-            onPress={async()=> {
+        <TouchableOpacity
+            onPress={async () => {
+                if(!isSameArray(savedTracks,currentList)) {
+                    await setContentTracksPlayer(savedTracks);
+                    setCurrentList(savedTracks);
+                }
                 setCurrenTrack(item);
                 const state = await TrackPlayer.getState();
-                if(state === State.Playing || state === State.Paused) {
+                if (state === State.Playing || state === State.Paused) {
                     await TrackPlayer.stop();
                 }
                 await TrackPlayer.skip(trackIndex);
                 TrackPlayer.play();
-                
+
             }}
             style={[style.songItem]}>
             <Image style={{ width: 50, height: 50, marginRight: 10, borderRadius: 6 }} source={{ uri: item.track.album.images[0].url }} />
@@ -46,23 +54,22 @@ const SongItem = ({ item,setCurrenTrack,trackIndex }: any) => {
 function LikedSong(): React.JSX.Element {
     const playbackState: any = usePlaybackState();
     const navigation: any = useNavigation();
-    const { currentTrack, setCurrentTrack }: any = useContext(Player);
+    const { currentTrack, setCurrentTrack,currentList,setCurrentList }: any = useContext(Player);
     const [input, setInput] = useState("");
     const [savedTracks, setSavedTracks] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
-    // const [currentSong, setCurrentSong] = useState(null);
     const [isPlaying, setIsPlaying] = useState(true);
 
     useTrackPlayerEvents([Event.PlaybackState], async (event) => {
         if (event.type === Event.PlaybackState) {
             const state = await TrackPlayer.getState();
-            if(state === State.Playing) {
+            if (state === State.Playing) {
                 setIsPlaying(true);
-            } else if(state===State.Paused) {
+            } else if (state === State.Paused) {
                 setIsPlaying(false);
             }
-            
+
         }
     });
 
@@ -87,38 +94,40 @@ function LikedSong(): React.JSX.Element {
         };
         try {
             const data_saveTracks = await getAPI(url_saveTracks, config_saveTracks);
-
-            const listTracks = data_saveTracks.items.map((item: any, index: any) => {
-                return {
-                    id: item.track.id,
-                    url: item.track.preview_url,
-                    title: item.track.name,
-                    artist: item.track.artists[0].name
-                }
-            })
-            await TrackPlayer.setupPlayer();
-            await TrackPlayer.add(listTracks);
             setSavedTracks(data_saveTracks.items);
             setIsLoading(false);
-            
+
         } catch (err: any) {
             console.log("Liked-Song: ", err.message);
         }
     }
+    const setContentTracksPlayer = async(data_saveTracks:any)=> {
+        const listTracks = data_saveTracks.map((item: any, index: any) => {
+            return {
+                id: item.track.id,
+                url: item.track.preview_url,
+                title: item.track.name,
+                artist: item.track.artists[0].name
+            }
+        })
+
+        await TrackPlayer.reset();
+        await TrackPlayer.add(listTracks);
+    }
     useEffect(() => {
         getSavedTracks();
     }, [])
-    useEffect(()=> {
-        
-    },[])
     console.log("saved-Tracks: ", savedTracks);
-
     const playTracks = async () => {
         if (savedTracks.length > 0) {
             setCurrentTrack(savedTracks[0]);
+            if(!isSameArray(savedTracks,currentList)){
+                setCurrentList(savedTracks);
+                await setContentTracksPlayer(savedTracks);
+            }
         }
         const state = await TrackPlayer.getState();
-        if(state === State.Playing || state === State.Paused) {
+        if (state === State.Playing || state === State.Paused) {
             await TrackPlayer.stop();
         }
         await TrackPlayer.skip(0);
@@ -127,9 +136,7 @@ function LikedSong(): React.JSX.Element {
 
     if (isLoading) {
         return (
-            <View>
-                <Text>Loading!!!</Text>
-            </View>
+            <Loading />
         )
     }
     return (
@@ -137,7 +144,9 @@ function LikedSong(): React.JSX.Element {
             <LinearGradient style={{ flex: 1, paddingHorizontal: 15, paddingVertical: 10 }} colors={["#F87275", "#c24f83"]}>
                 <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
                     <View style={{ flexDirection: "row", height: 40 }}>
-                        <TouchableOpacity style={{ alignItems: "center", justifyContent: "center" }}>
+                        <TouchableOpacity
+                            onPress={()=>{navigation.goBack();}}
+                            style={{ alignItems: "center", justifyContent: "center" }}>
                             <Image style={{ tintColor: "#fff" }} source={require("../icons/back-arrow.png")} />
                         </TouchableOpacity>
                         <View style={{ backgroundColor: "#38224e", marginLeft: 10, flexDirection: "row", overflow: "hidden", paddingHorizontal: 15, flex: 1, borderWidth: 2, borderColor: "#fff", borderRadius: 20, alignItems: "center" }}>
@@ -162,43 +171,20 @@ function LikedSong(): React.JSX.Element {
                     <View style={{ marginTop: 25 }}>
                         {
                             savedTracks.map((item, index) => {
-                                return <SongItem item={item} key={index} setCurrenTrack={setCurrentTrack} trackIndex={index}/>
+                                return <SongItem item={item} key={index} setCurrenTrack={setCurrentTrack}
+                                 trackIndex={index} savedTracks={savedTracks} currentList={currentList} setCurrentList={setCurrentList} setContentTracksPlayer={setContentTracksPlayer}/>
                             })
                         }
+                    </View>
+                    <View style={{ height: 70 }}>
+
                     </View>
                 </ScrollView>
             </LinearGradient>
             {
                 currentTrack && (
-                    <TouchableOpacity
-                        onPress={() => setModalVisible(!modalVisible)}
-                        style={[style.currentTrack]}>
-                        <View>
-                            <Image style={{ width: 60, height: 60, borderRadius: 5 }} source={{ uri: currentTrack.track.album.images[0].url }} />
-                        </View>
-                        <View>
-                            <Text numberOfLines={1} style={{ color: "#fff", fontSize: 20, fontWeight: "bold" }}>{currentTrack.track.name}</Text>
-                            <Text numberOfLines={1} style={{ color: "#fff", fontSize: 15 }}>{currentTrack.track.artists[0].name}</Text>
-                        </View>
-                        <TouchableOpacity
-                            onPress={async()=> {
-                                setIsPlaying(!isPlaying);
-                                const state = await TrackPlayer.getState();
-                                if (state === State.Playing) {
-                                    
-                                    await TrackPlayer.pause();
-                                } else if(state === State.Paused) {
-                                    await TrackPlayer.play();
-                                }
-                               
-                            }}>
-                            {
-                                isPlaying===true ?<Image style={{ tintColor: "#fff" }}  source={require("../icons/pause.png")} />
-                                    :<Image style={{ tintColor: "#fff" }}  source={require("../icons/play.png")} />
-                            }
-                            
-                        </TouchableOpacity>
-                    </TouchableOpacity>
+                    <CurrentTrackBottom currentTrack={currentTrack} modalVisible={modalVisible} 
+                    setModalVisible={setModalVisible} isPlaying = {isPlaying} setIsPlaying={setIsPlaying}/>
                 )
             }
             <BottomModal
