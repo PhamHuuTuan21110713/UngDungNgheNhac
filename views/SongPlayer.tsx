@@ -14,6 +14,8 @@ function SongPlayer({ item, modalVisible, setModalVisible }: any): React.JSX.Ele
     const { currentTrack, setCurrentTrack, currentList, setCurrentList }: any = useContext(Player);
     const [isLike, setIslike] = useState(false);
     const progress = useProgress();
+    const duration = new Date(progress.duration * 1000).toISOString().substr(14, 5);
+    const [newPosition, setNewPosition] = useState(null);
     useTrackPlayerEvents([Event.PlaybackState], async (event) => {
         if (event.type === Event.PlaybackState) {
             const state = await TrackPlayer.getState();
@@ -148,19 +150,26 @@ function SongPlayer({ item, modalVisible, setModalVisible }: any): React.JSX.Ele
                     <View style={{ marginTop: 70 }}>
                         <View>
                             <Slider
-                                style={{ width: 300, height: 40 }}
+                                style={{ width: "100%", height: 20 }}
                                 minimumValue={0}
                                 maximumValue={progress.duration}
                                 minimumTrackTintColor="#FFD369"
-                                maximumTrackTintColor="#FFF"
+                                maximumTrackTintColor="#000"
                                 thumbTintColor="#FFD369"
                                 value={progress.position}
-                                
+                                onSlidingComplete={async (value:any) => {
+                                    const state = await TrackPlayer.getState();
+                                    if (state === State.Playing) {
+                                        await TrackPlayer.seekTo(value);
+                                    } else {
+                                        setNewPosition(value);
+                                    }
+                                }}
                             />
                         </View>
                         <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                            <Text style={{ color: "#a46e8d", fontSize: 15 }}>0:00</Text>
-                            <Text style={{ color: "#a46e8d", fontSize: 15 }}>0:30</Text>
+                            <Text style={{ color: "#a46e8d", fontSize: 15 }}>{new Date(progress.position * 1000).toISOString().substr(14, 5)}</Text>
+                            <Text style={{ color: "#a46e8d", fontSize: 15 }}>{duration}</Text>
                         </View>
                     </View>
                     <View style={{ marginTop: 30, flexDirection: "row", justifyContent: "space-around", alignItems: "center" }}>
@@ -181,6 +190,10 @@ function SongPlayer({ item, modalVisible, setModalVisible }: any): React.JSX.Ele
                                     await TrackPlayer.pause();
                                 } else if (state === State.Paused) {
                                     startAnimation();
+                                    if(newPosition!==null) {
+                                        await TrackPlayer.seekTo(newPosition);
+                                        setNewPosition(null);
+                                    }
                                     await TrackPlayer.play();
                                 }
                             }}
