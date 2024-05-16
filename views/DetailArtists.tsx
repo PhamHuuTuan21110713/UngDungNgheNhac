@@ -12,6 +12,11 @@ import SongPlayer from "./SongPlayer";
 import CurrentTrackBottom from "./CurrentTrackBottom";
 
 import Loading from "./Loading";
+
+function isSameArray(array1:any,array2:any) {
+    return array1.length === array2.length && array1.every((value:any, index:any) => value === array2[index])
+}
+
 function DetailArtists({ route }: any): React.JSX.Element {
     const { data } = route.params;
     const navigation = useNavigation();
@@ -21,6 +26,7 @@ function DetailArtists({ route }: any): React.JSX.Element {
     const { currentTrack, setCurrentTrack, currentList, setCurrentList }: any = useContext(Player);
     const [modalVisible, setModalVisible] = useState(false);
     const [isPlaying, setIsPlaying] = useState(true);
+    const [indexSelected, setIndexSelected] = useState(0);
 
     useTrackPlayerEvents([Event.PlaybackState], async (event) => {
         if (event.type === Event.PlaybackState) {
@@ -40,7 +46,7 @@ function DetailArtists({ route }: any): React.JSX.Element {
             setCurrentTrack(currentList[nextTrackId]);
         }
     });
-
+   
     const getTopTracks = async () => {
         const accessToken = await AsyncStorage.getItem("token");
         const url = `https://api.spotify.com/v1/artists/${data.id}/top-tracks`;
@@ -70,9 +76,37 @@ function DetailArtists({ route }: any): React.JSX.Element {
         getTopTracks();
     }, [])
     // console.log("TopTrackArtisi: ",topTracks);
-    const RenderTopSong = ({ item, islike }: any) => {
+    const setContentTracksPlayer = async(data_saveTracks:any)=> {
+        const listTracks = data_saveTracks.map((item: any, index: any) => {
+            return {
+                id: item.id,
+                url: item.preview_url,
+                title: item.name,
+                artist: item.artists[0].name
+            }
+        })
+
+        await TrackPlayer.reset();
+        await TrackPlayer.add(listTracks);
+    }
+    const RenderTopSong = ({ item,trackIndex, islike }: any) => {
         return (
-            <TouchableOpacity style={{ marginTop: 10, borderRadius: 15, overflow: "hidden" }}>
+            <TouchableOpacity
+                onPress={async()=> {
+                    setIndexSelected(trackIndex);
+                    if(!isSameArray(topTracks,currentList)) {
+                        await setContentTracksPlayer(topTracks);
+                        setCurrentList(topTracks);
+                    }
+                    setCurrentTrack(item);
+                    const state = await TrackPlayer.getState();
+                    if (state === State.Playing || state === State.Paused) {
+                        await TrackPlayer.stop();
+                    }
+                    await TrackPlayer.skip(trackIndex);
+                    TrackPlayer.play();
+                }}
+                style={{ marginTop: 10, borderRadius: 15, overflow: "hidden" }}>
                 <LinearGradient
                     style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 20 }}
                     colors={["#232323", "#282828"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
@@ -92,7 +126,19 @@ function DetailArtists({ route }: any): React.JSX.Element {
         )
     }
     const playTrack = async()=> {
-        
+        if (topTracks.length > 0) {
+            setCurrentTrack(topTracks[0]);
+            if(!isSameArray(topTracks,currentList)){
+                setCurrentList(topTracks);
+                await setContentTracksPlayer(topTracks);
+            }
+        }
+        const state = await TrackPlayer.getState();
+        if (state === State.Playing || state === State.Paused) {
+            await TrackPlayer.stop();
+        }
+        await TrackPlayer.skip(0);
+        await TrackPlayer.play();
     }
     if (isLoading) {
         return (
@@ -127,7 +173,7 @@ function DetailArtists({ route }: any): React.JSX.Element {
                         <View>
                             {
                                 topTracks.map((item, index) => {
-                                    return <RenderTopSong item={item} key={index} islike={listSaved[index]} />;
+                                    return <RenderTopSong item={item} key={index} islike={listSaved[index]} trackIndex={index}/>;
                                 })
                             }
                         </View>
