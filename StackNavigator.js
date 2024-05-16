@@ -9,6 +9,8 @@ import Login from './views/Login';
 import Home from './views/Home';
 import Profile from './views/Profile';
 import LikedSong from './views/LikedSong';
+import DetailPlayList from './views/DetailPlayList';
+import DetailArtists from './views/DetailArtists';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -79,6 +81,8 @@ export default Navigation = () => {
                 <Stack.Screen name="Login" component={Login} />
                 <Stack.Screen name="Main" component={BottomTabs} />
                 <Stack.Screen name="LikedSong" component={LikedSong} />
+                <Stack.Screen name= "DetailPlayList" component={DetailPlayList}/>
+                <Stack.Screen name= "DetailArtists" component={DetailArtists}/>
             </Stack.Navigator>
         </NavigationContainer>
     )
