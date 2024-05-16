@@ -26,6 +26,7 @@ import {
 } from 'react-native/Libraries/NewAppScreen';
 
 import Navigation from "./StackNavigator";
+import Info from "./views/Info";
 type SectionProps = PropsWithChildren<{
   title: string;
 }>;
@@ -59,6 +60,7 @@ function Section({children, title}: SectionProps): React.JSX.Element {
 function App(): React.JSX.Element {
   return (
     <Navigation />
+//<Info ></Info>
   );
 }
 

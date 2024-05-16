@@ -28,9 +28,9 @@ function Login(): React.JSX.Element {
     async function logIn() {
         const config = {
             issuer: "https://accounts.spotify.com",
-            clientId: "02b869f8d6934d8a91762da9c4bcdc2e",
+            clientId: "2f16d83b711f4ddc9735061322827e3f",
             redirectUrl: "spodyfy-ungdungnghenhac://callback",
-            clientSecret: "622377172a9b48fd83d7ce2d25951a07",
+            clientSecret: "80230fc5990c4ab399b919dc55e0423e",
             scopes: [
                 "user-read-email",
                 "user-library-read",
