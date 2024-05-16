@@ -14,7 +14,9 @@ import CurrentTrackBottom from "./CurrentTrackBottom";
 
 const { width: screenWidth } = Dimensions.get("window");
 
-
+function isSameArray(array1: any, array2: any) {
+    return array1.length === array2.length && array1.every((value: any, index: any) => value === array2[index])
+}
 
 function Home(): React.JSX.Element {
     const navigation: any = useNavigation();
@@ -51,7 +53,7 @@ function Home(): React.JSX.Element {
             <View style={{ marginRight: 10 }}>
                 <TouchableOpacity
                     onPress={() => {
-                        navigation.navigate("DetailPlayList", { data: item });
+                        navigation.navigate("DetailPlayList", { data: item,user_id: userProfile.id});
                     }}
                     style={{ flex: 1, borderRadius: 10, overflow: "hidden" }}>
                     <LinearGradient style={{ alignItems: "center" }} colors={["#232323", "#282828"]} start={{ x: 0, y: 1 }} end={{ x: 1, y: 1 }}>
@@ -62,11 +64,38 @@ function Home(): React.JSX.Element {
             </View>
         )
     }
+    const setContentTracksPlayer = async (data_saveTracks: any) => {
+        const listTracks = data_saveTracks.map((item: any, index: any) => {
+            return {
+                id: item.track.id,
+                url: item.track.preview_url,
+                title: item.track.name,
+                artist: item.track.artists[0].name
+            }
+        })
 
-    const RenderRecentPlayed = ({ item }: any) => {
+        await TrackPlayer.reset();
+        await TrackPlayer.add(listTracks);
+    }
+    const RenderRecentPlayed = ({ item,trackIndex }: any) => {
         return (
             <View style={{ marginRight: 10 }}>
                 <TouchableOpacity
+                    onPress={async()=>{
+                        
+                        if (!isSameArray(recentPlayed, currentList)) {
+                            await setContentTracksPlayer(recentPlayed);
+                            setCurrentList(recentPlayed);
+                        }
+                        setCurrentTrack(item);
+                        setModalVisible(!modalVisible);
+                        const state = await TrackPlayer.getState();
+                        if (state === State.Playing || state === State.Paused) {
+                            await TrackPlayer.stop();
+                        }
+                        await TrackPlayer.skip(trackIndex);
+                        TrackPlayer.play();
+                    }}
                     style={{ flex: 1, borderRadius: 10, overflow: "hidden" }}>
                     <LinearGradient style={{ alignItems: "center" }} colors={["#232323", "#282828"]} start={{ x: 0, y: 1 }} end={{ x: 1, y: 1 }}>
                         <Image source={{ uri: item.track.album.images[0].url }} style={{ width: (screenWidth - 40) / 3, height: (screenWidth - 40) / 3 }} />
@@ -109,7 +138,7 @@ function Home(): React.JSX.Element {
                     Authorization: `Bearer ${accessToken}`
                 }
             };
-            const url_songs = "https://api.spotify.com/v1/me/player/recently-played?limit=5";
+            const url_songs = "https://api.spotify.com/v1/me/player/recently-played?limit=8";
 
             const config_artists = {
                 method: "GET",
@@ -217,7 +246,7 @@ function Home(): React.JSX.Element {
                                     showsHorizontalScrollIndicator={false}>
                                     {
                                         recentPlayed.map((item, index) => {
-                                            return <RenderRecentPlayed item={item} key={index} />
+                                            return <RenderRecentPlayed item={item} key={index} trackIndex={index}/>
                                         })
                                     }
                                 </ScrollView>

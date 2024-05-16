@@ -18,7 +18,7 @@ function CurrentTrackBottom({ currentTrack, modalVisible, setModalVisible, isPla
                 <View>
                     <Image style={{ width: 60, height: 60, borderRadius: 5 }} source={{ uri: currentTrack.track.album.images[0].url }} />
                 </View>
-                <View>
+                <View style={{flex:1,marginLeft:5}}>
                     <Text numberOfLines={1} style={{ color: "#fff", fontSize: 20, fontWeight: "bold" }}>{currentTrack.track.name}</Text>
                     <Text numberOfLines={1} style={{ color: "#fff", fontSize: 15 }}>{currentTrack.track.artists[0].name}</Text>
                 </View>
@@ -51,11 +51,12 @@ function CurrentTrackBottom({ currentTrack, modalVisible, setModalVisible, isPla
                 <View>
                     <Image style={{ width: 60, height: 60, borderRadius: 5 }} source={{ uri: currentTrack.album.images[0].url }} />
                 </View>
-                <View>
+                <View style={{flex:1}}>
                     <Text numberOfLines={1} style={{ color: "#fff", fontSize: 20, fontWeight: "bold" }}>{currentTrack.name}</Text>
                     <Text numberOfLines={1} style={{ color: "#fff", fontSize: 15 }}>{currentTrack.artists[0].name}</Text>
                 </View>
                 <TouchableOpacity
+                    
                     onPress={async () => {
                         setIsPlaying(!isPlaying);
                         const state = await TrackPlayer.getState();

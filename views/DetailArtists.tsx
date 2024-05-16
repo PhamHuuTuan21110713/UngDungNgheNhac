@@ -26,7 +26,6 @@ function DetailArtists({ route }: any): React.JSX.Element {
     const { currentTrack, setCurrentTrack, currentList, setCurrentList }: any = useContext(Player);
     const [modalVisible, setModalVisible] = useState(false);
     const [isPlaying, setIsPlaying] = useState(true);
-    const [indexSelected, setIndexSelected] = useState(0);
 
     useTrackPlayerEvents([Event.PlaybackState], async (event) => {
         if (event.type === Event.PlaybackState) {
@@ -93,7 +92,6 @@ function DetailArtists({ route }: any): React.JSX.Element {
         return (
             <TouchableOpacity
                 onPress={async()=> {
-                    setIndexSelected(trackIndex);
                     if(!isSameArray(topTracks,currentList)) {
                         await setContentTracksPlayer(topTracks);
                         setCurrentList(topTracks);
@@ -111,7 +109,7 @@ function DetailArtists({ route }: any): React.JSX.Element {
                     style={{ flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 20 }}
                     colors={["#232323", "#282828"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
                     <Image style={{ width: 60, height: 60 }} source={{ uri: item.album.images[0].url }} />
-                    <View style={{ justifyContent: "center", marginLeft: 20 }}>
+                    <View style={{flex:1, justifyContent: "center", marginLeft: 20 }}>
                         <Text style={{ color: "#fff", fontSize: 15 }} numberOfLines={1}>{item.album.name}</Text>
                     </View>
                     <TouchableOpacity style={{ justifyContent: "center", alignItems: "center" }}>
@@ -148,7 +146,7 @@ function DetailArtists({ route }: any): React.JSX.Element {
     return (
         <>
             <View style={{ flex: 1, backgroundColor: "#000" }}>
-                <ScrollView style={{ flex: 1, backgroundColor: "#000" }}>
+                <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1, backgroundColor: "#000" }}>
                     <View style={{ width: "100%" }}>
                         <Image style={{ width: "100%", height: 250 }} source={{ uri: data.images[0].url }} />
                         <View style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', position: "absolute", bottom: 0, left: 0, right: 0, alignItems: "flex-start" }}>
@@ -161,7 +159,13 @@ function DetailArtists({ route }: any): React.JSX.Element {
                         </TouchableOpacity>
                     </View>
                     <View style={{ flexDirection: "row", marginTop: 20, justifyContent: "space-between", alignItems: "center", paddingHorizontal: 20 }}>
-                        <Text style={{ color: "#fff", fontSize: 15 }}>Followers: {data.followers.total}</Text>
+                        <View>
+                            <Text style={{ color: "#fff", fontSize: 15 }}>Followers: {data.followers.total}</Text>
+                            <TouchableOpacity 
+                                style={{marginTop:10,alignItems:"center",justifyContent:"center",width:80, height:50, backgroundColor:"#000",borderColor:"#fff",borderWidth:2,borderRadius:5}}>
+                                <Text style={{color:"#fff", fontSize:15, fontWeight:"bold"}}>Follow</Text>
+                            </TouchableOpacity>
+                        </View>
                         <TouchableOpacity
                             onPress={playTrack}
                         style={{ width: 60, height: 60, backgroundColor: "#31a24c", justifyContent: "center", alignItems: "center", borderRadius: 60 }}>
