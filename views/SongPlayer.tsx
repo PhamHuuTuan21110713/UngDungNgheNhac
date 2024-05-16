@@ -7,10 +7,12 @@ import { useNavigation } from "@react-navigation/native";
 import TrackPlayer, { Capability, State, usePlaybackState,useTrackPlayerEvents,Event } from 'react-native-track-player';
 import { Player } from "./ContextTrack";
 
-function SongPlayer({ item,modalVisible,setModalVisible }: any): React.JSX.Element {
+function SongPlayer({ item,modalVisible,setModalVisible}: any): React.JSX.Element {
     const [isPlaying, setIsPlaying] = useState(true);
     const spintValue = useRef(new Animated.Value(0)).current;
     const { currentTrack, setCurrentTrack , currentList,setCurrentList }: any = useContext(Player);
+    const [isLike,setIslike] = useState(false);
+
     useTrackPlayerEvents([Event.PlaybackState], async (event) => {
         if (event.type === Event.PlaybackState) {
             const state = await TrackPlayer.getState();
@@ -22,6 +24,36 @@ function SongPlayer({ item,modalVisible,setModalVisible }: any): React.JSX.Eleme
             
         }
     });
+    useTrackPlayerEvents([Event.PlaybackTrackChanged], async (event) => {
+        if (event.type === Event.PlaybackTrackChanged && event.nextTrack !== null) {
+            const nextTrackId = event.nextTrack;
+            setCurrentTrack(currentList[nextTrackId]);
+            setUpInfoTrack(); 
+        }
+    });
+    const setUpInfoTrack = async()=> {
+        let id_track = "";
+        if(currentTrack.track) {
+            id_track = currentTrack.track.id;
+        } else {
+            id_track = currentTrack.id;
+        }
+        const accessToken = await AsyncStorage.getItem("token");
+        const url_checkSaved = `https://api.spotify.com/v1/me/tracks/contains?ids=${id_track}`;
+        const config = {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${accessToken}`
+            },
+        };
+        try {
+            const data_check = await getAPI(url_checkSaved, config);
+            console.log("islike: ",data_check[0]);
+            setIslike(data_check[0]);
+        } catch (err: any) {
+            console.log(err.message);
+        }
+    }
 
     const spin = spintValue.interpolate({
         inputRange:[0,1],
@@ -55,7 +87,9 @@ function SongPlayer({ item,modalVisible,setModalVisible }: any): React.JSX.Eleme
         setIsPlaying(false);
         
     };
-    
+    useEffect(()=> {
+        setUpInfoTrack();
+    },[])
     useEffect(()=> {
         
         async function setStatePlay() {
@@ -88,18 +122,23 @@ function SongPlayer({ item,modalVisible,setModalVisible }: any): React.JSX.Eleme
                 <View style={{ alignItems: "center" }}>
                     <Animated.View style={{transform:[{rotate:spin}], justifyContent: "center", alignItems: "center", width: 250, height: 250, marginTop: 30, borderRadius: 250 }}>
                         <LinearGradient colors={["#1b1b1c", "#808080"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{width:"100%",height:"100%",alignItems:"center",justifyContent:"center",borderRadius:250}}>
-                            <Image style={{ width: 180, height: 180, borderRadius: 180 }} source={{ uri: currentTrack.track.album.images[0].url }} />
+                            {
+                               <Image style={{ width: 180, height: 180, borderRadius: 180 }} source={{ uri:currentTrack.track? currentTrack.track.album.images[0].url:currentTrack.album.images[0].url }} />
+                            }
                         </LinearGradient>
                     </Animated.View>
                 </View>
                 <View style={{ marginTop: 30, paddingHorizontal: 20 }}>
                     <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                         <View>
-                            <Text style={{ color: "#5f225b", fontSize: 25, fontWeight: "bold" }}>{currentTrack.track.name}</Text>
-                            <Text style={{ color: "#a46e8d", fontSize: 15, fontWeight: "500", marginTop: 5 }}>{currentTrack.track.artists[0].name}</Text>
+                            <Text style={{ color: "#5f225b", fontSize: 25, fontWeight: "bold" }}>{currentTrack.track?currentTrack.track.name:currentTrack.name}</Text>
+                            <Text style={{ color: "#a46e8d", fontSize: 15, fontWeight: "500", marginTop: 5 }}>{currentTrack.track?currentTrack.track.artists[0].name:currentTrack.artists[0].name}</Text>
                         </View>
                         <TouchableOpacity>
-                            <Image style={{ tintColor: "#18b14c" }} source={require("../icons/heart-d-24.png")} />
+                            {
+                                isLike? <Image style={{ tintColor: "#18b14c" }} source={require("../icons/heart-d-24.png")} />
+                                    : <Image style={{ tintColor: "#fff" }} source={require("../icons/heart-d-24.png")} />
+                            }
                         </TouchableOpacity>
                     </View>
                     <View style={{ marginTop: 70 }}>
