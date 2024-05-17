@@ -291,6 +291,15 @@ function DetailPlayList({ route }: any): React.JSX.Element {
                     <AddTrackToPlaylist uriTrack={uriTrackToAdd} setModalTrackToPlaylist={setModalTrackToPlaylist} />
                 </ModalContent>
             </BottomModal>
+            <BottomModal
+                visible={modalTrackToPlaylist}
+                onHardwareBackPress={() => setModalTrackToPlaylist(false)}
+                swipeDirection={["up", "down"]}
+                swipeThreshold={200}>
+                <ModalContent style={{ height: "100%", width: "100%", backgroundColor: "#000" }}>
+                    <AddTrackToPlaylist uriTrack={uriTrackToAdd} setModalTrackToPlaylist={setModalTrackToPlaylist} />
+                </ModalContent>
+            </BottomModal>
         </>
     )
 }
