@@ -3,13 +3,13 @@ import React, { useContext, useEffect, useState } from "react";
 import LinearGradient from "react-native-linear-gradient";
 import { getAPI } from "../UsingAPI/CallAPI.js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation,useIsFocused } from "@react-navigation/native";
 import { Player } from "./ContextTrack";
 import { BottomModal, ModalContent } from 'react-native-modals';
 import TrackPlayer, { Capability, State, usePlaybackState, useTrackPlayerEvents, Event } from 'react-native-track-player';
 import { CreatePlaylist, DeletePlayList, DeleteTrackOfPlaylist } from "../UsingAPI/PlayListAPI.js";
 import { DeleteSavedTrack, AddSaveTrack } from "../UsingAPI/SavedTracksAPI.js";
-
+import FindTrackToAdd from "./FindTrackToAdd";
 import Loading from "./Loading";
 import SongPlayer from "./SongPlayer";
 import CurrentTrackBottom from "./CurrentTrackBottom";
@@ -19,7 +19,8 @@ function isSameArray(array1: any, array2: any) {
 }
 
 function DetailPlayList({ route }: any): React.JSX.Element {
-    const { data, user_id } = route.params;
+    const { data, user_id,isRefreshHome,setIsRefreshHome } = route.params;
+    const isFocused = useIsFocused();
     const navigation = useNavigation();
     const [tracks, setTracks] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -29,8 +30,10 @@ function DetailPlayList({ route }: any): React.JSX.Element {
     const [isDeleting, setIsDeleting] = useState(false);
     const [isPlaying, setIsPlaying] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
+    const [modalPlaylistAddTrack, setModalPlaylistAddTrack] = useState(false)
     const [modalTrackToPlaylist, setModalTrackToPlaylist] = useState(false);
     const [uriTrackToAdd, setUriTrackToAdd] = useState("");
+    const [isRefresh,setIsRefresh] = useState(false);
     useTrackPlayerEvents([Event.PlaybackState], async (event) => {
         if (event.type === Event.PlaybackState) {
             const state = await TrackPlayer.getState();
@@ -174,7 +177,7 @@ function DetailPlayList({ route }: any): React.JSX.Element {
     }
     useEffect(() => {
         getTracks();
-    }, [currentTrack])
+    }, [isRefresh])
     const playTrack = async () => {
         if (tracks.length > 0) {
             setCurrentTrack(tracks[0]);
@@ -223,7 +226,9 @@ function DetailPlayList({ route }: any): React.JSX.Element {
                     </View>
                     <View style={{ marginTop: 20 }}>
                         {
-                            isAdding ? (<TouchableOpacity style={{ flexDirection: "row", alignItems: "center" }}>
+                            isAdding ? (<TouchableOpacity 
+                                    onPress={()=>setModalPlaylistAddTrack(true)}
+                                    style={{ flexDirection: "row", alignItems: "center" }}>
                                 <View style={{ borderRadius: 50, width: 50, height: 50, justifyContent: "center", alignItems: "center", backgroundColor: "#ababab" }}>
                                     <Image style={{ tintColor: "#fff" }} source={require("../icons/add.png")} />
                                 </View>
@@ -238,6 +243,7 @@ function DetailPlayList({ route }: any): React.JSX.Element {
                                 console.log(data.id)
                                 const res_dl_pll = await DeletePlayList(data.id, accessToken);
                                 if (res_dl_pll.ok) {
+                                    setIsRefreshHome(!isRefreshHome);
                                     navigation.goBack();
                                 } else {
                                     console.log("res_dl_pll: ", res_dl_pll.status);
@@ -278,7 +284,7 @@ function DetailPlayList({ route }: any): React.JSX.Element {
                 swipeDirection={["up", "down"]}
                 swipeThreshold={200}>
                 <ModalContent style={{ height: "100%", width: "100%", backgroundColor: "#453249" }}>
-                    <SongPlayer item={currentTrack} modalVisible={modalVisible} setModalVisible={setModalVisible} />
+                    <SongPlayer item={currentTrack} modalVisible={modalVisible} setModalVisible={setModalVisible} isRefresh={isRefresh} setIsRefresh={setIsRefresh}/>
                 </ModalContent>
 
             </BottomModal>
@@ -292,12 +298,12 @@ function DetailPlayList({ route }: any): React.JSX.Element {
                 </ModalContent>
             </BottomModal>
             <BottomModal
-                visible={modalTrackToPlaylist}
-                onHardwareBackPress={() => setModalTrackToPlaylist(false)}
+                visible={modalPlaylistAddTrack}
+                onHardwareBackPress={() => setModalPlaylistAddTrack(false)}
                 swipeDirection={["up", "down"]}
                 swipeThreshold={200}>
                 <ModalContent style={{ height: "100%", width: "100%", backgroundColor: "#000" }}>
-                    <AddTrackToPlaylist uriTrack={uriTrackToAdd} setModalTrackToPlaylist={setModalTrackToPlaylist} />
+                    <FindTrackToAdd playlistId={data.id} setModalPlaylistAddTrack={setModalPlaylistAddTrack} setModalVisible={setModalVisible} isRefresh={isRefresh} setIsRefresh={setIsRefresh}/>
                 </ModalContent>
             </BottomModal>
         </>
