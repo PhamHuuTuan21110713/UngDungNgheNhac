@@ -2,6 +2,7 @@ import { SafeAreaView, StatusBar, Image, ScrollView, StyleSheet, Text, View, Pre
 import React, { useContext, useEffect, useState } from "react";
 import LinearGradient from "react-native-linear-gradient";
 import { getAPI } from "../UsingAPI/CallAPI.js";
+import { DeleteSavedTrack } from "../UsingAPI/SavedTracksAPI.js"
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import { Player } from "./ContextTrack";
@@ -12,15 +13,15 @@ import SongPlayer from "./SongPlayer";
 import Loading from "./Loading";
 import CurrentTrackBottom from "./CurrentTrackBottom";
 
-function isSameArray(array1:any,array2:any) {
-    return array1.length === array2.length && array1.every((value:any, index:any) => value === array2[index])
+function isSameArray(array1: any, array2: any) {
+    return array1.length === array2.length && array1.every((value: any, index: any) => value === array2[index])
 }
 
-const SongItem = ({ item, setCurrentTrack, trackIndex ,savedTracks,currentList,setCurrentList ,setContentTracksPlayer}: any) => {
+const SongItem = ({ item, setCurrentTrack, trackIndex, savedTracks,setSavedTracks, currentList, setCurrentList, setContentTracksPlayer }: any) => {
     return (
         <TouchableOpacity
             onPress={async () => {
-                if(!isSameArray(savedTracks,currentList)) {
+                if (!isSameArray(savedTracks, currentList)) {
                     await setContentTracksPlayer(savedTracks);
                     setCurrentList(savedTracks);
                 }
@@ -40,7 +41,19 @@ const SongItem = ({ item, setCurrentTrack, trackIndex ,savedTracks,currentList,s
                 <Text style={{ color: "#b8b8b8" }}>{item.track.artists[0].name}</Text>
             </View>
             <View style={{ flex: 1, flexDirection: "row", justifyContent: "space-around" }}>
-                <TouchableOpacity>
+                <TouchableOpacity
+                    onPress={ async()=> {
+                        const accessToken = await AsyncStorage.getItem("token");
+                        const ids = [item.track.id].join(",");
+                        
+                        try {
+                            const data = await DeleteSavedTrack(ids,accessToken);
+                            setSavedTracks(data.items);
+                        } catch(err:any) {
+                            console.log(err.message);
+                        }
+
+                    }} >
                     <Image style={{ tintColor: "#18b14c" }} source={require("../icons/heart-d-24.png")} />
                 </TouchableOpacity>
                 <TouchableOpacity>
@@ -54,7 +67,7 @@ const SongItem = ({ item, setCurrentTrack, trackIndex ,savedTracks,currentList,s
 function LikedSong(): React.JSX.Element {
     const playbackState: any = usePlaybackState();
     const navigation: any = useNavigation();
-    const { currentTrack, setCurrentTrack,currentList,setCurrentList }: any = useContext(Player);
+    const { currentTrack, setCurrentTrack, currentList, setCurrentList }: any = useContext(Player);
     const [input, setInput] = useState("");
     const [savedTracks, setSavedTracks] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -91,6 +104,7 @@ function LikedSong(): React.JSX.Element {
             params: {
                 limit: 50
             }
+            
         };
         try {
             const data_saveTracks = await getAPI(url_saveTracks, config_saveTracks);
@@ -101,7 +115,7 @@ function LikedSong(): React.JSX.Element {
             console.log("Liked-Song: ", err.message);
         }
     }
-    const setContentTracksPlayer = async(data_saveTracks:any)=> {
+    const setContentTracksPlayer = async (data_saveTracks: any) => {
         const listTracks = data_saveTracks.map((item: any, index: any) => {
             return {
                 id: item.track.id,
@@ -121,7 +135,7 @@ function LikedSong(): React.JSX.Element {
     const playTracks = async () => {
         if (savedTracks.length > 0) {
             setCurrentTrack(savedTracks[0]);
-            if(!isSameArray(savedTracks,currentList)){
+            if (!isSameArray(savedTracks, currentList)) {
                 setCurrentList(savedTracks);
                 await setContentTracksPlayer(savedTracks);
             }
@@ -145,7 +159,7 @@ function LikedSong(): React.JSX.Element {
                 <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
                     <View style={{ flexDirection: "row", height: 40 }}>
                         <TouchableOpacity
-                            onPress={()=>{navigation.goBack();}}
+                            onPress={() => { navigation.goBack(); }}
                             style={{ alignItems: "center", justifyContent: "center" }}>
                             <Image style={{ tintColor: "#fff" }} source={require("../icons/back-arrow.png")} />
                         </TouchableOpacity>
@@ -172,7 +186,7 @@ function LikedSong(): React.JSX.Element {
                         {
                             savedTracks.map((item, index) => {
                                 return <SongItem item={item} key={index} setCurrentTrack={setCurrentTrack}
-                                 trackIndex={index} savedTracks={savedTracks} currentList={currentList} setCurrentList={setCurrentList} setContentTracksPlayer={setContentTracksPlayer}/>
+                                    trackIndex={index} savedTracks={savedTracks} setSavedTracks={setSavedTracks} currentList={currentList} setCurrentList={setCurrentList} setContentTracksPlayer={setContentTracksPlayer} />
                             })
                         }
                     </View>
@@ -183,8 +197,8 @@ function LikedSong(): React.JSX.Element {
             </LinearGradient>
             {
                 currentTrack && (
-                    <CurrentTrackBottom currentTrack={currentTrack} modalVisible={modalVisible} 
-                    setModalVisible={setModalVisible} isPlaying = {isPlaying} setIsPlaying={setIsPlaying}/>
+                    <CurrentTrackBottom currentTrack={currentTrack} modalVisible={modalVisible}
+                        setModalVisible={setModalVisible} isPlaying={isPlaying} setIsPlaying={setIsPlaying} />
                 )
             }
             <BottomModal
@@ -193,7 +207,7 @@ function LikedSong(): React.JSX.Element {
                 swipeDirection={["up", "down"]}
                 swipeThreshold={200}>
                 <ModalContent style={{ height: "100%", width: "100%", backgroundColor: "#453249" }}>
-                    <SongPlayer item={currentTrack} modalVisible={modalVisible} setModalVisible={setModalVisible}  />
+                    <SongPlayer item={currentTrack} modalVisible={modalVisible} setModalVisible={setModalVisible} />
                 </ModalContent>
 
             </BottomModal>
