@@ -11,22 +11,22 @@ export const DeleteSavedTrack = async (ids, accessToken) => {
         body: JSON.stringify({ ids: ids.split(",") }) 
     };
     const res = await fetch(url, config);
-    if(res.ok) {
-        try {
-            const get_data = await getAPI("https://api.spotify.com/v1/me/tracks?offset=0&limit=50", {
-                method: "GET",
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
-                },
-                params: {
-                    limit: 50
-                }
-            });
-            return get_data;
-        } catch (err) {
-            console.log(err.message);
-        }
-    }
+    return res;
    
+}
+
+export const AddSaveTrack = async(ids, accessToken)=> {
+    const url = `https://api.spotify.com/v1/me/tracks`;
+    const config = {
+        method: 'PUT',
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ ids: ids.split(",") }) 
+    };
+    const res = await fetch(url, config);
+    console.log("Put status: ",res.status);
+    return res;
 }
    

@@ -7,24 +7,24 @@ import { useNavigation } from "@react-navigation/native";
 
 function Login(): React.JSX.Element {
     const navigation:any = useNavigation();
-    useEffect(()=> {
-        const checkTokenValidity = async ()=> {
-            const accessToken = await AsyncStorage.getItem("token");
-            const expirationDate = await AsyncStorage.getItem("expirationDate");
-            console.log("Token: ",accessToken);
-            console.log("expirationDate: ",expirationDate)
-            if(accessToken && expirationDate) {
-                const currTime = Date.now();
-                if(currTime < parseInt(expirationDate)) {
-                    navigation.replace("Main");
-                } else {
-                    AsyncStorage.removeItem("token");
-                    AsyncStorage.removeItem("expirationDate");
-                }
-            }
-        }
-        checkTokenValidity();
-    },[])
+    // useEffect(()=> {
+    //     const checkTokenValidity = async ()=> {
+    //         const accessToken = await AsyncStorage.getItem("token");
+    //         const expirationDate = await AsyncStorage.getItem("expirationDate");
+    //         console.log("Token: ",accessToken);
+    //         console.log("expirationDate: ",expirationDate)
+    //         if(accessToken && expirationDate) {
+    //             const currTime = Date.now();
+    //             if(currTime < parseInt(expirationDate)) {
+    //                 navigation.replace("Main");
+    //             } else {
+    //                 AsyncStorage.removeItem("token");
+    //                 AsyncStorage.removeItem("expirationDate");
+    //             }
+    //         }
+    //     }
+    //     checkTokenValidity();
+    // },[])
     async function logIn() {
         const config = {
             issuer: "https://accounts.spotify.com",
@@ -39,7 +39,10 @@ function Login(): React.JSX.Element {
                 "playlist-read-private",
                 "playlist-read-collaborative",
                 "playlist-modify-public",
-                "user-library-modify"
+                "user-library-modify",
+                "user-follow-modify",
+                "user-follow-read",
+                "playlist-modify-private"
             ]
         };
 

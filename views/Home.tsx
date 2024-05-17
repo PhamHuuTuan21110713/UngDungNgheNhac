@@ -1,14 +1,14 @@
-import { SafeAreaView, StatusBar, Image, ScrollView, StyleSheet, Text, View, Pressable, Touchable, TouchableOpacity, Dimensions } from "react-native";
+import { SafeAreaView, StatusBar, Image, ScrollView, StyleSheet, Text, View, Pressable, Touchable, TouchableOpacity, Dimensions, TextInput } from "react-native";
 import React, { useContext, useEffect, useState } from "react";
 import LinearGradient from "react-native-linear-gradient";
 import { getAPI } from "../UsingAPI/CallAPI.js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation ,useIsFocused } from "@react-navigation/native";
 import TrackPlayer, { Capability, State, usePlaybackState, useTrackPlayerEvents, Event } from 'react-native-track-player';
 import Loading from "./Loading";
 import { Player } from "./ContextTrack";
 import { BottomModal, ModalContent } from 'react-native-modals';
-
+import { CreatePlaylist } from "../UsingAPI/PlayListAPI.js";
 import SongPlayer from "./SongPlayer";
 import CurrentTrackBottom from "./CurrentTrackBottom";
 
@@ -18,17 +18,19 @@ function isSameArray(array1: any, array2: any) {
     return array1.length === array2.length && array1.every((value: any, index: any) => value === array2[index])
 }
 
+
 function Home(): React.JSX.Element {
     const navigation: any = useNavigation();
+    const isFocused = useIsFocused();
     const [userProfile, setUserProfile] = useState();
     const [recentPlayed, setRecentPlayed] = useState([]);
     const [topArtists, setTopArtists] = useState([]);
     const [playList, setPlayList] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const { currentTrack, setCurrentTrack,currentList,setCurrentList}: any = useContext(Player);
+    const { currentTrack, setCurrentTrack, currentList, setCurrentList }: any = useContext(Player);
     const [modalVisible, setModalVisible] = useState(false);
     const [isPlaying, setIsPlaying] = useState(true);
-
+    const [modalNewPLaylistVisible, setModalNewPlaylistVisible] = useState(false);
     useTrackPlayerEvents([Event.PlaybackState], async (event) => {
         if (event.type === Event.PlaybackState) {
             const state = await TrackPlayer.getState();
@@ -48,16 +50,67 @@ function Home(): React.JSX.Element {
         }
     });
 
+    const NameForPlaylist = () => {
+        const [text, setText] = useState('');
+        return (
+            <View style={{ justifyContent: "center", alignItems: "center", width: "100%", height: "100%", backgroundColor: "#000", paddingHorizontal: 30 }}>
+                <Text numberOfLines={2} style={{ color: "#fff", fontSize: 30, fontWeight: "bold" }}>Name your playlist</Text>
+                <View style={{ width: "100%", height: 60, paddingHorizontal: 20, borderBottomColor: "#fff", borderBottomWidth: 2, marginTop: 20 }}>
+                    <TextInput
+                        onChangeText={setText}
+                        placeholder="Enter Your Playlist's Name"
+                        placeholderTextColor={"#fff"}
+                        style={{ textAlign: "center", color: "#fff", fontSize: 20, fontWeight: "bold", width: "100%", height: "100%" }} />
+                </View>
+                <View style={{ flexDirection: "row", marginTop: 30, justifyContent: "space-around", width: "100%" }}>
+                    <TouchableOpacity
+                        onPress={() => {
+                            setModalNewPlaylistVisible(false);
+                        }}
+                        style={{ justifyContent: "center", alignItems: "center", width: 100, height: 50, backgroundColor: "#000", borderRadius: 30, borderColor: "#fff", borderWidth: 1 }}>
+                        <Text style={{ color: "#fff", fontSize: 15, fontWeight: "bold" }}>Cancle</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={async () => {
+                            const accessToken = await AsyncStorage.getItem("token");
+                            const res_addPll = await CreatePlaylist(userProfile.id, text, accessToken);
+                            const url_playlist = "https://api.spotify.com/v1/me/playlists?offset=0&limit=20";
+                            const config_user = {
+                                method: "GET",
+                                headers: {
+                                    Authorization: `Bearer ${accessToken}`
+                                }
+                            };
+                            if (res_addPll.ok) {
+                                const data_playList = await getAPI(url_playlist, config_user);
+                                setPlayList(data_playList.items);
+                                setModalNewPlaylistVisible(false);
+                            } else {
+                                console.log("Cannot create the playlist!");
+                            }
+                        }}
+                        style={{ justifyContent: "center", alignItems: "center", width: 100, height: 50, backgroundColor: "#18b14c", borderRadius: 30 }}>
+                        <Text style={{ color: "#000", fontSize: 15, fontWeight: "bold" }}>Create</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
+        )
+    }
+
     const RenderPlaylist = ({ item }: any) => {
         return (
             <View style={{ marginRight: 10 }}>
                 <TouchableOpacity
                     onPress={() => {
-                        navigation.navigate("DetailPlayList", { data: item,user_id: userProfile.id});
+                        navigation.navigate("DetailPlayList", { data: item, user_id: userProfile.id });
                     }}
                     style={{ flex: 1, borderRadius: 10, overflow: "hidden" }}>
                     <LinearGradient style={{ alignItems: "center" }} colors={["#232323", "#282828"]} start={{ x: 0, y: 1 }} end={{ x: 1, y: 1 }}>
-                        <Image source={{ uri: item.images[0].url }} style={{ width: (screenWidth - 40) / 3, height: (screenWidth - 40) / 3 }} />
+                        {
+                            item.images ? (
+                                <Image source={{ uri: item.images[0].url }} style={{ width: (screenWidth - 40) / 3, height: (screenWidth - 40) / 3 }} />
+                            ) : <Image source={{ uri: "https://t3.ftcdn.net/jpg/01/95/82/02/360_F_195820215_3qBs8o8cUenR6H9ZWIjnKe60IXSb1xjv.jpg" }} style={{ width: (screenWidth - 40) / 3, height: (screenWidth - 40) / 3 }} />
+                        }
                         <Text ellipsizeMode="middle" numberOfLines={2} style={{ width: (screenWidth - 40) / 3, fontSize: 17, fontWeight: "bold", color: "#fff" }}>{item.name}</Text>
                     </LinearGradient>
                 </TouchableOpacity>
@@ -77,12 +130,12 @@ function Home(): React.JSX.Element {
         await TrackPlayer.reset();
         await TrackPlayer.add(listTracks);
     }
-    const RenderRecentPlayed = ({ item,trackIndex }: any) => {
+    const RenderRecentPlayed = ({ item, trackIndex }: any) => {
         return (
             <View style={{ marginRight: 10 }}>
                 <TouchableOpacity
-                    onPress={async()=>{
-                        
+                    onPress={async () => {
+
                         if (!isSameArray(recentPlayed, currentList)) {
                             await setContentTracksPlayer(recentPlayed);
                             setCurrentList(recentPlayed);
@@ -174,8 +227,9 @@ function Home(): React.JSX.Element {
                 console.log(err.message);
             }
         }
+        console.log("Dang vao home")
         getProfile();
-    }, []);
+    }, [isFocused]);
     console.log("user-prf: ", userProfile);
     console.log("recent-pld: ", recentPlayed);
     console.log("top-arts: ", topArtists);
@@ -191,7 +245,7 @@ function Home(): React.JSX.Element {
                 <StatusBar backgroundColor={"black"} />
                 <SafeAreaView style={{ flex: 1, paddingBottom: 50 }}>
                     <LinearGradient colors={["#232323", "#282828"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[style.largestContainer]}>
-                        <ScrollView>
+                        <ScrollView showsVerticalScrollIndicator={false}>
                             <View style={[style.headingContainer]}>
                                 <TouchableOpacity>
                                     <Image source={require("../icons/menu.png")} style={{ tintColor: "#fff" }} />
@@ -211,11 +265,20 @@ function Home(): React.JSX.Element {
                                     </TouchableOpacity>
                                 </View>
                             </View>
-                            <View>
-                                <Text style={{ color: "#fff", fontSize: 20, fontWeight: "bold", marginTop: 30 }}>Your Playlist</Text>
+                            <View style={{ marginTop: 30 }}>
+                                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+                                    <Text style={{ color: "#fff", fontSize: 20, fontWeight: "bold" }}>Your Playlist</Text>
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            setModalNewPlaylistVisible(true);
+                                        }}
+                                        style={{ justifyContent: "center", alignItems: "center", borderWidth: 1, borderColor: "#fff", padding: 10, borderRadius: 5 }}>
+                                        <Text style={{ color: "#fff", fontSize: 15, fontWeight: "bold" }}>New PlayList</Text>
+                                    </TouchableOpacity>
+                                </View>
                                 <ScrollView
                                     horizontal
-                                    pagingEnabled
+
                                     showsHorizontalScrollIndicator={false}
                                     style={{ marginTop: 20 }}>
                                     {
@@ -229,7 +292,7 @@ function Home(): React.JSX.Element {
                                 <Text style={{ color: "#fff", fontSize: 20, fontWeight: "bold", marginTop: 10 }} >Top Artists</Text>
                                 <ScrollView style={{ marginTop: 20 }}
                                     horizontal
-                                    pagingEnabled
+
                                     showsHorizontalScrollIndicator={false}>
                                     {
                                         topArtists.map((item, index) => {
@@ -242,11 +305,11 @@ function Home(): React.JSX.Element {
                                 <Text style={{ color: "#fff", fontSize: 20, fontWeight: "bold", marginTop: 10 }} >Recently Played</Text>
                                 <ScrollView style={{ marginTop: 20 }}
                                     horizontal
-                                    pagingEnabled
+
                                     showsHorizontalScrollIndicator={false}>
                                     {
                                         recentPlayed.map((item, index) => {
-                                            return <RenderRecentPlayed item={item} key={index} trackIndex={index}/>
+                                            return <RenderRecentPlayed item={item} key={index} trackIndex={index} />
                                         })
                                     }
                                 </ScrollView>
@@ -271,7 +334,15 @@ function Home(): React.JSX.Element {
                 <ModalContent style={{ height: "100%", width: "100%", backgroundColor: "#453249" }}>
                     <SongPlayer item={currentTrack} modalVisible={modalVisible} setModalVisible={setModalVisible} />
                 </ModalContent>
-
+            </BottomModal>
+            <BottomModal
+                visible={modalNewPLaylistVisible}
+                onHardwareBackPress={() => setModalNewPlaylistVisible(false)}
+                swipeDirection={["up", "down"]}
+                swipeThreshold={200}>
+                <ModalContent style={{ height: "100%", width: "100%", backgroundColor: "#000" }}>
+                    <NameForPlaylist />
+                </ModalContent>
             </BottomModal>
         </>
     )

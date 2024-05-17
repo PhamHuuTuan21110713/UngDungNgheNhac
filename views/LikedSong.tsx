@@ -47,8 +47,24 @@ const SongItem = ({ item, setCurrentTrack, trackIndex, savedTracks,setSavedTrack
                         const ids = [item.track.id].join(",");
                         
                         try {
-                            const data = await DeleteSavedTrack(ids,accessToken);
-                            setSavedTracks(data.items);
+                            const res = await DeleteSavedTrack(ids,accessToken);
+                            if(res.ok) {
+                                try {
+                                    const get_data = await getAPI("https://api.spotify.com/v1/me/tracks?offset=0&limit=50", {
+                                        method: "GET",
+                                        headers: {
+                                            Authorization: `Bearer ${accessToken}`
+                                        },
+                                        params: {
+                                            limit: 50
+                                        }
+                                    });
+                                    setSavedTracks(get_data.items);
+                                } catch (err:any) {
+                                    console.log(err.message);
+                                }
+                            }
+                            
                         } catch(err:any) {
                             console.log(err.message);
                         }
