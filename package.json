@@ -22,6 +22,7 @@
     "expo-linear-gradient": "^12.7.2",
     "expo-modules-core": "^1.11.13",
     "jetify": "^1.0.2",
+    "lodash": "^4.17.21",
     "react": "18.2.0",
     "react-native": "0.73.7",
     "react-native-app-auth": "^7.1.3",

@@ -21,7 +21,6 @@ function isSameArray(array1: any, array2: any) {
 
 function Home(): React.JSX.Element {
     const navigation: any = useNavigation();
-    const isFocused = useIsFocused();
     const [userProfile, setUserProfile] = useState();
     const [recentPlayed, setRecentPlayed] = useState([]);
     const [topArtists, setTopArtists] = useState([]);
@@ -31,6 +30,7 @@ function Home(): React.JSX.Element {
     const [modalVisible, setModalVisible] = useState(false);
     const [isPlaying, setIsPlaying] = useState(true);
     const [modalNewPLaylistVisible, setModalNewPlaylistVisible] = useState(false);
+    const [isRefresh,setIsRefresh] = useState(false);
     useTrackPlayerEvents([Event.PlaybackState], async (event) => {
         if (event.type === Event.PlaybackState) {
             const state = await TrackPlayer.getState();
@@ -50,7 +50,7 @@ function Home(): React.JSX.Element {
         }
     });
 
-    const NameForPlaylist = () => {
+    const NameForPlaylist = ({isRefresh,setIsRefresh}:any) => {
         const [text, setText] = useState('');
         return (
             <View style={{ justifyContent: "center", alignItems: "center", width: "100%", height: "100%", backgroundColor: "#000", paddingHorizontal: 30 }}>
@@ -64,7 +64,7 @@ function Home(): React.JSX.Element {
                 </View>
                 <View style={{ flexDirection: "row", marginTop: 30, justifyContent: "space-around", width: "100%" }}>
                     <TouchableOpacity
-                        onPress={() => {
+                        onPress={() => {  
                             setModalNewPlaylistVisible(false);
                         }}
                         style={{ justifyContent: "center", alignItems: "center", width: 100, height: 50, backgroundColor: "#000", borderRadius: 30, borderColor: "#fff", borderWidth: 1 }}>
@@ -74,16 +74,8 @@ function Home(): React.JSX.Element {
                         onPress={async () => {
                             const accessToken = await AsyncStorage.getItem("token");
                             const res_addPll = await CreatePlaylist(userProfile.id, text, accessToken);
-                            const url_playlist = "https://api.spotify.com/v1/me/playlists?offset=0&limit=20";
-                            const config_user = {
-                                method: "GET",
-                                headers: {
-                                    Authorization: `Bearer ${accessToken}`
-                                }
-                            };
                             if (res_addPll.ok) {
-                                const data_playList = await getAPI(url_playlist, config_user);
-                                setPlayList(data_playList.items);
+                                setIsRefresh(!isRefresh);
                                 setModalNewPlaylistVisible(false);
                             } else {
                                 console.log("Cannot create the playlist!");
@@ -102,7 +94,7 @@ function Home(): React.JSX.Element {
             <View style={{ marginRight: 10 }}>
                 <TouchableOpacity
                     onPress={() => {
-                        navigation.navigate("DetailPlayList", { data: item, user_id: userProfile.id });
+                        navigation.navigate("DetailPlayList", { data: item, user_id: userProfile.id, isRefreshHome:isRefresh, setIsRefreshHome:setIsRefresh });
                     }}
                     style={{ flex: 1, borderRadius: 10, overflow: "hidden" }}>
                     <LinearGradient style={{ alignItems: "center" }} colors={["#232323", "#282828"]} start={{ x: 0, y: 1 }} end={{ x: 1, y: 1 }}>
@@ -229,7 +221,7 @@ function Home(): React.JSX.Element {
         }
         console.log("Dang vao home")
         getProfile();
-    }, [isFocused]);
+    }, [isRefresh]);
     console.log("user-prf: ", userProfile);
     console.log("recent-pld: ", recentPlayed);
     console.log("top-arts: ", topArtists);
@@ -332,7 +324,7 @@ function Home(): React.JSX.Element {
                 swipeDirection={["up", "down"]}
                 swipeThreshold={200}>
                 <ModalContent style={{ height: "100%", width: "100%", backgroundColor: "#453249" }}>
-                    <SongPlayer item={currentTrack} modalVisible={modalVisible} setModalVisible={setModalVisible} />
+                    <SongPlayer item={currentTrack} modalVisible={modalVisible} setModalVisible={setModalVisible} isRefresh={isRefresh} setIsRefresh={setIsRefresh}/>
                 </ModalContent>
             </BottomModal>
             <BottomModal
@@ -341,7 +333,7 @@ function Home(): React.JSX.Element {
                 swipeDirection={["up", "down"]}
                 swipeThreshold={200}>
                 <ModalContent style={{ height: "100%", width: "100%", backgroundColor: "#000" }}>
-                    <NameForPlaylist />
+                    <NameForPlaylist isRefresh={isRefresh} setIsRefresh={setIsRefresh}/>
                 </ModalContent>
             </BottomModal>
         </>

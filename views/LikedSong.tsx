@@ -1,10 +1,10 @@
 import { SafeAreaView, StatusBar, Image, ScrollView, StyleSheet, Text, View, Pressable, Touchable, TouchableOpacity, Dimensions, TextInput } from "react-native";
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useState,useCallback  } from "react";
 import LinearGradient from "react-native-linear-gradient";
 import { getAPI } from "../UsingAPI/CallAPI.js";
 import { DeleteSavedTrack } from "../UsingAPI/SavedTracksAPI.js"
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation,useIsFocused, useFocusEffect } from "@react-navigation/native";
 import { Player } from "./ContextTrack";
 import { BottomModal, ModalContent } from 'react-native-modals';
 import TrackPlayer, { Capability, State, usePlaybackState, useTrackPlayerEvents, Event } from 'react-native-track-player';
@@ -31,7 +31,7 @@ function LikedSong(): React.JSX.Element {
     const [isPlaying, setIsPlaying] = useState(true);
     const [modalTrackToPlaylist,setModalTrackToPlaylist] = useState(false);
     const [uriTrackToAdd,setUriTrackToAdd] = useState("");
-
+    const [isRefresh,setIsRefresh] = useState(false);
     const SongItem = ({ item, setCurrentTrack, trackIndex, savedTracks,setSavedTracks, currentList, setCurrentList, setContentTracksPlayer }: any) => {
         return (
             <TouchableOpacity
@@ -152,9 +152,10 @@ function LikedSong(): React.JSX.Element {
         await TrackPlayer.reset();
         await TrackPlayer.add(listTracks);
     }
+
     useEffect(() => {
         getSavedTracks();
-    }, [])
+    }, [isRefresh])
     console.log("saved-Tracks: ", savedTracks);
     const playTracks = async () => {
         if (savedTracks.length > 0) {
@@ -231,7 +232,7 @@ function LikedSong(): React.JSX.Element {
                 swipeDirection={["up", "down"]}
                 swipeThreshold={200}>
                 <ModalContent style={{ height: "100%", width: "100%", backgroundColor: "#453249" }}>
-                    <SongPlayer item={currentTrack} modalVisible={modalVisible} setModalVisible={setModalVisible} />
+                    <SongPlayer item={currentTrack} modalVisible={modalVisible} setModalVisible={setModalVisible} isRefresh={isRefresh} setIsRefresh={setIsRefresh}/>
                 </ModalContent>
 
             </BottomModal>
