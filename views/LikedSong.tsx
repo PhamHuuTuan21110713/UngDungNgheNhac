@@ -12,73 +12,13 @@ import TrackPlayer, { Capability, State, usePlaybackState, useTrackPlayerEvents,
 import SongPlayer from "./SongPlayer";
 import Loading from "./Loading";
 import CurrentTrackBottom from "./CurrentTrackBottom";
+import AddTrackToPlaylist from "./AddTrackToPlaylist";
 
 function isSameArray(array1: any, array2: any) {
     return array1.length === array2.length && array1.every((value: any, index: any) => value === array2[index])
 }
 
-const SongItem = ({ item, setCurrentTrack, trackIndex, savedTracks,setSavedTracks, currentList, setCurrentList, setContentTracksPlayer }: any) => {
-    return (
-        <TouchableOpacity
-            onPress={async () => {
-                if (!isSameArray(savedTracks, currentList)) {
-                    await setContentTracksPlayer(savedTracks);
-                    setCurrentList(savedTracks);
-                }
-                setCurrentTrack(item);
-                const state = await TrackPlayer.getState();
-                if (state === State.Playing || state === State.Paused) {
-                    await TrackPlayer.stop();
-                }
-                await TrackPlayer.skip(trackIndex);
-                TrackPlayer.play();
 
-            }}
-            style={[style.songItem]}>
-            <Image style={{ width: 50, height: 50, marginRight: 10, borderRadius: 6 }} source={{ uri: item.track.album.images[0].url }} />
-            <View style={{ width: "65%" }}>
-                <Text numberOfLines={1} style={{ color: "#fff", fontSize: 20, fontWeight: "bold" }}>{item.track.name}</Text>
-                <Text style={{ color: "#b8b8b8" }}>{item.track.artists[0].name}</Text>
-            </View>
-            <View style={{ flex: 1, flexDirection: "row", justifyContent: "space-around" }}>
-                <TouchableOpacity
-                    onPress={ async()=> {
-                        const accessToken = await AsyncStorage.getItem("token");
-                        const ids = [item.track.id].join(",");
-                        
-                        try {
-                            const res = await DeleteSavedTrack(ids,accessToken);
-                            if(res.ok) {
-                                try {
-                                    const get_data = await getAPI("https://api.spotify.com/v1/me/tracks?offset=0&limit=50", {
-                                        method: "GET",
-                                        headers: {
-                                            Authorization: `Bearer ${accessToken}`
-                                        },
-                                        params: {
-                                            limit: 50
-                                        }
-                                    });
-                                    setSavedTracks(get_data.items);
-                                } catch (err:any) {
-                                    console.log(err.message);
-                                }
-                            }
-                            
-                        } catch(err:any) {
-                            console.log(err.message);
-                        }
-
-                    }} >
-                    <Image style={{ tintColor: "#18b14c" }} source={require("../icons/heart-d-24.png")} />
-                </TouchableOpacity>
-                <TouchableOpacity>
-                    <Image style={{ tintColor: "#fff" }} source={require("../icons/dots.png")} />
-                </TouchableOpacity>
-            </View>
-        </TouchableOpacity>
-    )
-}
 
 function LikedSong(): React.JSX.Element {
     const playbackState: any = usePlaybackState();
@@ -89,7 +29,75 @@ function LikedSong(): React.JSX.Element {
     const [isLoading, setIsLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
     const [isPlaying, setIsPlaying] = useState(true);
+    const [modalTrackToPlaylist,setModalTrackToPlaylist] = useState(false);
+    const [uriTrackToAdd,setUriTrackToAdd] = useState("");
 
+    const SongItem = ({ item, setCurrentTrack, trackIndex, savedTracks,setSavedTracks, currentList, setCurrentList, setContentTracksPlayer }: any) => {
+        return (
+            <TouchableOpacity
+                onPress={async () => {
+                    if (!isSameArray(savedTracks, currentList)) {
+                        await setContentTracksPlayer(savedTracks);
+                        setCurrentList(savedTracks);
+                    }
+                    setCurrentTrack(item);
+                    const state = await TrackPlayer.getState();
+                    if (state === State.Playing || state === State.Paused) {
+                        await TrackPlayer.stop();
+                    }
+                    await TrackPlayer.skip(trackIndex);
+                    TrackPlayer.play();
+    
+                }}
+                style={[style.songItem]}>
+                <Image style={{ width: 50, height: 50, marginRight: 10, borderRadius: 6 }} source={{ uri: item.track.album.images[0].url }} />
+                <View style={{ width: "65%" }}>
+                    <Text numberOfLines={1} style={{ color: "#fff", fontSize: 20, fontWeight: "bold" }}>{item.track.name}</Text>
+                    <Text style={{ color: "#b8b8b8" }}>{item.track.artists[0].name}</Text>
+                </View>
+                <View style={{ flex: 1, flexDirection: "row", justifyContent: "space-around" }}>
+                    <TouchableOpacity
+                        onPress={ async()=> {
+                            const accessToken = await AsyncStorage.getItem("token");
+                            const ids = [item.track.id].join(",");
+                            
+                            try {
+                                const res = await DeleteSavedTrack(ids,accessToken);
+                                if(res.ok) {
+                                    try {
+                                        const get_data = await getAPI("https://api.spotify.com/v1/me/tracks?offset=0&limit=50", {
+                                            method: "GET",
+                                            headers: {
+                                                Authorization: `Bearer ${accessToken}`
+                                            },
+                                            params: {
+                                                limit: 50
+                                            }
+                                        });
+                                        setSavedTracks(get_data.items);
+                                    } catch (err:any) {
+                                        console.log(err.message);
+                                    }
+                                }
+                                
+                            } catch(err:any) {
+                                console.log(err.message);
+                            }
+    
+                        }} >
+                        <Image style={{ tintColor: "#18b14c" }} source={require("../icons/heart-d-24.png")} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={()=>{
+                            setUriTrackToAdd(item.track.uri) ;
+                            setModalTrackToPlaylist(true);
+                        }}>
+                        <Image style={{ tintColor: "#fff" }} source={require("../icons/dots.png")} />
+                    </TouchableOpacity>
+                </View>
+            </TouchableOpacity>
+        )
+    }
     useTrackPlayerEvents([Event.PlaybackState], async (event) => {
         if (event.type === Event.PlaybackState) {
             const state = await TrackPlayer.getState();
@@ -226,6 +234,15 @@ function LikedSong(): React.JSX.Element {
                     <SongPlayer item={currentTrack} modalVisible={modalVisible} setModalVisible={setModalVisible} />
                 </ModalContent>
 
+            </BottomModal>
+            <BottomModal
+                visible={modalTrackToPlaylist}
+                onHardwareBackPress={() => setModalTrackToPlaylist(false)}
+                swipeDirection={["up", "down"]}
+                swipeThreshold={200}>
+                <ModalContent style={{ height: "100%", width: "100%", backgroundColor: "#000" }}>
+                    <AddTrackToPlaylist uriTrack={uriTrackToAdd} setModalTrackToPlaylist={setModalTrackToPlaylist}/>
+                </ModalContent>
             </BottomModal>
         </>
     )

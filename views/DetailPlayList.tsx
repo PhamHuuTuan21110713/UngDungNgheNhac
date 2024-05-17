@@ -13,7 +13,7 @@ import { DeleteSavedTrack, AddSaveTrack } from "../UsingAPI/SavedTracksAPI.js";
 import Loading from "./Loading";
 import SongPlayer from "./SongPlayer";
 import CurrentTrackBottom from "./CurrentTrackBottom";
-
+import AddTrackToPlaylist from "./AddTrackToPlaylist";
 function isSameArray(array1: any, array2: any) {
     return array1.length === array2.length && array1.every((value: any, index: any) => value === array2[index])
 }
@@ -29,6 +29,8 @@ function DetailPlayList({ route }: any): React.JSX.Element {
     const [isDeleting, setIsDeleting] = useState(false);
     const [isPlaying, setIsPlaying] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
+    const [modalTrackToPlaylist, setModalTrackToPlaylist] = useState(false);
+    const [uriTrackToAdd, setUriTrackToAdd] = useState("");
     useTrackPlayerEvents([Event.PlaybackState], async (event) => {
         if (event.type === Event.PlaybackState) {
             const state = await TrackPlayer.getState();
@@ -139,17 +141,17 @@ function DetailPlayList({ route }: any): React.JSX.Element {
                     {
                         isDeleting ? (
                             <TouchableOpacity
-                                onPress={async() => {
+                                onPress={async () => {
                                     const accessToken = await AsyncStorage.getItem("token");
                                     const playlist_id = data.id;
 
                                     const tracks = [{
-                                        uri: item.track.id
+                                        uri: item.track.uri
                                     }]
                                     console.log(playlist_id)
                                     console.log(tracks);
-                                    const res_dlit = await DeleteTrackOfPlaylist(playlist_id,accessToken,tracks);
-                                    console.log("res_dlit-stt: ",res_dlit.status);
+                                    const res_dlit = await DeleteTrackOfPlaylist(playlist_id, accessToken, tracks);
+                                    getTracks();
                                 }}
                                 style={{ justifyContent: "center", alignItems: "center", marginLeft: 10 }}>
                                 <Image source={require("../icons/close.png")} />
@@ -158,7 +160,14 @@ function DetailPlayList({ route }: any): React.JSX.Element {
                             null
                         )
                     }
-
+                    <TouchableOpacity
+                        onPress={() => {
+                            setUriTrackToAdd(item.track.uri);
+                            setModalTrackToPlaylist(true);
+                        }}
+                        style={{ justifyContent: "center", alignItems: "center", marginLeft: 10 }}>
+                        <Image style={{ tintColor: "#fff" }} source={require("../icons/dots.png")} />
+                    </TouchableOpacity>
                 </LinearGradient>
             </TouchableOpacity>
         )
@@ -223,24 +232,20 @@ function DetailPlayList({ route }: any): React.JSX.Element {
                         }
                     </View>
                     <View style={{ flexDirection: "row", marginTop: 20, justifyContent: "space-between" }}>
-                        {
-                            isDeleting ? (
-                                <TouchableOpacity
-                                    onPress={async () => {
-                                        const accessToken = await AsyncStorage.getItem("token");
-                                        console.log(data.id)
-                                        const res_dl_pll = await DeletePlayList(data.id, accessToken);
-                                        if (res_dl_pll.ok) {
-                                            navigation.goBack();
-                                        } else {
-                                            console.log("res_dl_pll: ", res_dl_pll.status);
-                                        }
-                                    }}
-                                    style={{ justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#fff", borderRadius: 5, width: 100, height: 50 }}>
-                                    <Text style={{ color: "#fff", fontSize: 17, fontWeight: "bold" }}>Delete playlist</Text>
-                                </TouchableOpacity>
-                            ) : (<View></View>)
-                        }
+                        <TouchableOpacity
+                            onPress={async () => {
+                                const accessToken = await AsyncStorage.getItem("token");
+                                console.log(data.id)
+                                const res_dl_pll = await DeletePlayList(data.id, accessToken);
+                                if (res_dl_pll.ok) {
+                                    navigation.goBack();
+                                } else {
+                                    console.log("res_dl_pll: ", res_dl_pll.status);
+                                }
+                            }}
+                            style={{ justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#fff", borderRadius: 5, width: 100, height: 50 }}>
+                            <Text style={{ color: "#fff", fontSize: 17, fontWeight: "bold" }}>Delete playlist</Text>
+                        </TouchableOpacity>
 
                         <TouchableOpacity
                             onPress={playTrack}
@@ -276,6 +281,15 @@ function DetailPlayList({ route }: any): React.JSX.Element {
                     <SongPlayer item={currentTrack} modalVisible={modalVisible} setModalVisible={setModalVisible} />
                 </ModalContent>
 
+            </BottomModal>
+            <BottomModal
+                visible={modalTrackToPlaylist}
+                onHardwareBackPress={() => setModalTrackToPlaylist(false)}
+                swipeDirection={["up", "down"]}
+                swipeThreshold={200}>
+                <ModalContent style={{ height: "100%", width: "100%", backgroundColor: "#000" }}>
+                    <AddTrackToPlaylist uriTrack={uriTrackToAdd} setModalTrackToPlaylist={setModalTrackToPlaylist} />
+                </ModalContent>
             </BottomModal>
         </>
     )

@@ -12,7 +12,7 @@ import {FollowUser, CheckIsFollowing, UnfollowUser} from "../UsingAPI/UserAPI.js
 import SongPlayer from "./SongPlayer"; 
 import CurrentTrackBottom from "./CurrentTrackBottom";
 import Loading from "./Loading";
-
+import AddTrackToPlaylist from "./AddTrackToPlaylist";
 function isSameArray(array1:any,array2:any) {
     return array1.length === array2.length && array1.every((value:any, index:any) => value === array2[index])
 }
@@ -27,7 +27,8 @@ function DetailArtists({ route }: any): React.JSX.Element {
     const [modalVisible, setModalVisible] = useState(false);
     const [isPlaying, setIsPlaying] = useState(true);
     const [isFollowing,setIsFollowing] = useState(false);
-
+    const [modalTrackToPlaylist, setModalTrackToPlaylist] = useState(false);
+    const [uriTrackToAdd, setUriTrackToAdd] = useState("");
     useTrackPlayerEvents([Event.PlaybackState], async (event) => {
         if (event.type === Event.PlaybackState) {
             const state = await TrackPlayer.getState();
@@ -139,6 +140,14 @@ function DetailArtists({ route }: any): React.JSX.Element {
                         }
 
                     </TouchableOpacity>
+                    <TouchableOpacity
+                        onPress={() => {
+                            setUriTrackToAdd(item.uri);
+                            setModalTrackToPlaylist(true);
+                        }}
+                        style={{ justifyContent: "center", alignItems: "center", marginLeft: 10 }}>
+                        <Image style={{ tintColor: "#fff" }} source={require("../icons/dots.png")} />
+                    </TouchableOpacity>
                 </LinearGradient>
             </TouchableOpacity>
         )
@@ -236,6 +245,16 @@ function DetailArtists({ route }: any): React.JSX.Element {
                 </ModalContent>
 
             </BottomModal>
+            <BottomModal
+                visible={modalTrackToPlaylist}
+                onHardwareBackPress={() => setModalTrackToPlaylist(false)}
+                swipeDirection={["up", "down"]}
+                swipeThreshold={200}>
+                <ModalContent style={{ height: "100%", width: "100%", backgroundColor: "#000" }}>
+                    <AddTrackToPlaylist uriTrack={uriTrackToAdd} setModalTrackToPlaylist={setModalTrackToPlaylist} />
+                </ModalContent>
+            </BottomModal>
+       
         </>
     )
 }
