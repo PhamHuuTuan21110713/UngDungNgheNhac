@@ -7,10 +7,10 @@ import { useNavigation } from "@react-navigation/native";
 import { Player } from "./ContextTrack";
 import { BottomModal, ModalContent } from 'react-native-modals';
 import TrackPlayer, { Capability, State, usePlaybackState, useTrackPlayerEvents, Event } from 'react-native-track-player';
-
-import SongPlayer from "./SongPlayer";
+import {DeleteSavedTrack ,AddSaveTrack} from "../UsingAPI/SavedTracksAPI.js";
+import {FollowUser, CheckIsFollowing, UnfollowUser} from "../UsingAPI/UserAPI.js";
+import SongPlayer from "./SongPlayer"; 
 import CurrentTrackBottom from "./CurrentTrackBottom";
-
 import Loading from "./Loading";
 
 function isSameArray(array1:any,array2:any) {
@@ -26,6 +26,7 @@ function DetailArtists({ route }: any): React.JSX.Element {
     const { currentTrack, setCurrentTrack, currentList, setCurrentList }: any = useContext(Player);
     const [modalVisible, setModalVisible] = useState(false);
     const [isPlaying, setIsPlaying] = useState(true);
+    const [isFollowing,setIsFollowing] = useState(false);
 
     useTrackPlayerEvents([Event.PlaybackState], async (event) => {
         if (event.type === Event.PlaybackState) {
@@ -56,15 +57,19 @@ function DetailArtists({ route }: any): React.JSX.Element {
             },
         };
         try {
-            const data = await getAPI(url, config);
-            console.log("TrackArtstdata: ", data);
-            const ids = data.tracks.map((item: any, index: any) => {
+            const data_track = await getAPI(url, config);
+            console.log("TrackArtstdata: ", data_track);
+            const ids_user = [data.id].join(",");
+            console.log("id_uswfs: ",ids_user)
+            const data_isfollow = await CheckIsFollowing(ids_user,accessToken,'artist');
+            const ids = data_track.tracks.map((item: any, index: any) => {
                 return item.id;
             }).join(",");
             const url_checkSaved = `https://api.spotify.com/v1/me/tracks/contains?ids=${ids}`;
             const data_check = await getAPI(url_checkSaved, config);
             console.log("datacheck: ", data_check);
-            setTopTracks(data.tracks);
+            setTopTracks(data_track.tracks);
+            setIsFollowing(data_isfollow[0]);
             setListSaved(data_check);
             setIsLoading(false);
         } catch (err: any) {
@@ -73,7 +78,7 @@ function DetailArtists({ route }: any): React.JSX.Element {
     }
     useEffect(() => {
         getTopTracks();
-    }, [])
+    }, [currentTrack])
     // console.log("TopTrackArtisi: ",topTracks);
     const setContentTracksPlayer = async(data_saveTracks:any)=> {
         const listTracks = data_saveTracks.map((item: any, index: any) => {
@@ -89,6 +94,7 @@ function DetailArtists({ route }: any): React.JSX.Element {
         await TrackPlayer.add(listTracks);
     }
     const RenderTopSong = ({ item,trackIndex, islike }: any) => {
+        const [isLikeItem,setIsLikeItem]=useState(islike);
         return (
             <TouchableOpacity
                 onPress={async()=> {
@@ -110,11 +116,25 @@ function DetailArtists({ route }: any): React.JSX.Element {
                     colors={["#232323", "#282828"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
                     <Image style={{ width: 60, height: 60 }} source={{ uri: item.album.images[0].url }} />
                     <View style={{flex:1, justifyContent: "center", marginLeft: 20 }}>
-                        <Text style={{ color: "#fff", fontSize: 15 }} numberOfLines={1}>{item.album.name}</Text>
+                        <Text style={{ color: "#fff", fontSize: 15 }} numberOfLines={1}>{item.name}</Text>
                     </View>
-                    <TouchableOpacity style={{ justifyContent: "center", alignItems: "center" }}>
+                    <TouchableOpacity
+                        onPress={async()=> {
+                            const accessToken = await AsyncStorage.getItem("token");
+                            const ids = [item.id].join(",");
+                            if(isLikeItem==false) {
+                                setIsLikeItem(true);
+                                await AddSaveTrack(ids,accessToken);
+                               
+                            } else {
+                                setIsLikeItem(false);
+                                await DeleteSavedTrack(ids,accessToken);
+                            }
+                            
+                        }}
+                        style={{ justifyContent: "center", alignItems: "center" }}>
                         {
-                            islike ? <Image style={{ tintColor: "#31a24c" }} source={require("../icons/heart-d-24.png")} />
+                            isLikeItem ? <Image style={{ tintColor: "#31a24c" }} source={require("../icons/heart-d-24.png")} />
                                 : <Image style={{ tintColor: "#fff" }} source={require("../icons/heart-d-24.png")} />
                         }
 
@@ -162,8 +182,23 @@ function DetailArtists({ route }: any): React.JSX.Element {
                         <View>
                             <Text style={{ color: "#fff", fontSize: 15 }}>Followers: {data.followers.total}</Text>
                             <TouchableOpacity 
+                                onPress={async()=> {
+                                    const accessToken = await AsyncStorage.getItem("token");
+                                    const ids = data.id;
+                                    if(isFollowing==false) {
+                                        setIsFollowing(true);
+                                        await FollowUser(ids,accessToken,'artist');
+                                    } else {
+                                        setIsFollowing(false);
+                                        await UnfollowUser(ids,accessToken,'artist');
+                                    }
+                                }}
                                 style={{marginTop:10,alignItems:"center",justifyContent:"center",width:80, height:50, backgroundColor:"#000",borderColor:"#fff",borderWidth:2,borderRadius:5}}>
-                                <Text style={{color:"#fff", fontSize:15, fontWeight:"bold"}}>Follow</Text>
+                                {
+                                    isFollowing ? (<Text style={{color:"#fff", fontSize:15, fontWeight:"bold"}}>Following</Text>)
+                                        :<Text style={{color:"#fff", fontSize:15, fontWeight:"bold"}}>Follow</Text>
+                                }
+                                
                             </TouchableOpacity>
                         </View>
                         <TouchableOpacity

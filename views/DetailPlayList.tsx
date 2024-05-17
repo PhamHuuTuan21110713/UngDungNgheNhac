@@ -7,6 +7,8 @@ import { useNavigation } from "@react-navigation/native";
 import { Player } from "./ContextTrack";
 import { BottomModal, ModalContent } from 'react-native-modals';
 import TrackPlayer, { Capability, State, usePlaybackState, useTrackPlayerEvents, Event } from 'react-native-track-player';
+import { CreatePlaylist, DeletePlayList, DeleteTrackOfPlaylist } from "../UsingAPI/PlayListAPI.js";
+import { DeleteSavedTrack, AddSaveTrack } from "../UsingAPI/SavedTracksAPI.js";
 
 import Loading from "./Loading";
 import SongPlayer from "./SongPlayer";
@@ -24,6 +26,7 @@ function DetailPlayList({ route }: any): React.JSX.Element {
     const { currentTrack, setCurrentTrack, currentList, setCurrentList }: any = useContext(Player);
     const [listSaved, setListSaved] = useState([]);
     const [isAdding, setIsAdding] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [isPlaying, setIsPlaying] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
     useTrackPlayerEvents([Event.PlaybackState], async (event) => {
@@ -68,6 +71,7 @@ function DetailPlayList({ route }: any): React.JSX.Element {
             setTracks(data_s.items);
             setListSaved(data_check);
             setIsAdding(user_id == data.owner.id);
+            setIsDeleting(user_id == data.owner.id);
             setIsLoading(false);
         } catch (err: any) {
             console.log(err.message);
@@ -87,6 +91,7 @@ function DetailPlayList({ route }: any): React.JSX.Element {
         await TrackPlayer.add(listTracks);
     }
     const RenderTrack = ({ item, trackIndex, islike }: any) => {
+        const [isLikeItem, setIsLikeItem] = useState(islike);
         return (
             <TouchableOpacity
                 onPress={async () => {
@@ -110,21 +115,61 @@ function DetailPlayList({ route }: any): React.JSX.Element {
                     <View style={{ flex: 1, justifyContent: "center", marginLeft: 20 }}>
                         <Text style={{ color: "#fff", fontSize: 15 }} numberOfLines={1}>{item.track.name}</Text>
                     </View>
-                    <TouchableOpacity style={{ justifyContent: "center", alignItems: "center" }}>
+                    <TouchableOpacity
+                        onPress={async () => {
+                            const accessToken = await AsyncStorage.getItem("token");
+                            const ids = [item.track.id].join(",");
+                            if (isLikeItem == false) {
+                                setIsLikeItem(true);
+                                await AddSaveTrack(ids, accessToken);
+
+                            } else {
+                                setIsLikeItem(false);
+                                await DeleteSavedTrack(ids, accessToken);
+                            }
+
+                        }}
+                        style={{ justifyContent: "center", alignItems: "center" }}>
                         {
-                            islike ? <Image style={{ tintColor: "#31a24c" }} source={require("../icons/heart-d-24.png")} />
+                            isLikeItem ? <Image style={{ tintColor: "#31a24c" }} source={require("../icons/heart-d-24.png")} />
                                 : <Image style={{ tintColor: "#fff" }} source={require("../icons/heart-d-24.png")} />
                         }
 
                     </TouchableOpacity>
+                    {
+                        isDeleting ? (
+                            <TouchableOpacity
+                                onPress={async() => {
+                                    const accessToken = await AsyncStorage.getItem("token");
+                                    const playlist_id = data.id;
+
+                                    const tracks = [{
+                                        uri: item.track.id
+                                    }]
+                                    console.log(playlist_id)
+                                    console.log(tracks);
+                                    const res_dlit = await DeleteTrackOfPlaylist(playlist_id,accessToken,tracks);
+                                    console.log("res_dlit-stt: ",res_dlit.status);
+                                }}
+                                style={{ justifyContent: "center", alignItems: "center", marginLeft: 10 }}>
+                                <Image source={require("../icons/close.png")} />
+                            </TouchableOpacity>
+                        ) : (
+                            null
+                        )
+                    }
+
                 </LinearGradient>
             </TouchableOpacity>
         )
     }
-    const playTrack = async()=> {
+    useEffect(() => {
+        getTracks();
+    }, [currentTrack])
+    const playTrack = async () => {
         if (tracks.length > 0) {
             setCurrentTrack(tracks[0]);
-            if(!isSameArray(tracks,currentList)){
+            if (!isSameArray(tracks, currentList)) {
                 setCurrentList(tracks);
                 await setContentTracksPlayer(tracks);
             }
@@ -136,9 +181,9 @@ function DetailPlayList({ route }: any): React.JSX.Element {
         await TrackPlayer.skip(0);
         await TrackPlayer.play();
     }
-    useEffect(() => {
-        getTracks();
-    }, [])
+    // useEffect(() => {
+    //     getTracks();
+    // }, [])
     if (isLoading) {
         return (
             <Loading />
@@ -148,7 +193,11 @@ function DetailPlayList({ route }: any): React.JSX.Element {
         <>
             <View style={{ flex: 1, backgroundColor: "#000" }}>
                 <LinearGradient style={{ paddingTop: 20, paddingBottom: 0, alignItems: "center" }} colors={["#9ec2d0", "#000"]}>
-                    <Image style={{ width: 200, height: 200 }} source={{ uri: data.images[0].url }} />
+
+                    {
+                        data.images ? (<Image style={{ width: 200, height: 200 }} source={{ uri: data.images[0].url }} />)
+                            : (<Image style={{ width: 200, height: 200 }} source={{ uri: "https://t3.ftcdn.net/jpg/01/95/82/02/360_F_195820215_3qBs8o8cUenR6H9ZWIjnKe60IXSb1xjv.jpg" }} />)
+                    }
                     <TouchableOpacity
                         onPress={() => { navigation.goBack(); }}
                         style={{ justifyContent: "center", alignItems: "center", position: "absolute", left: 10, top: 10, backgroundColor: 'rgba(0, 0, 0, 0.6)', width: 50, height: 50, borderRadius: 50 }}>
@@ -173,8 +222,27 @@ function DetailPlayList({ route }: any): React.JSX.Element {
                             </TouchableOpacity>) : (<View></View>)
                         }
                     </View>
-                    <View style={{ alignItems: "flex-end" }}>
-                        <TouchableOpacity 
+                    <View style={{ flexDirection: "row", marginTop: 20, justifyContent: "space-between" }}>
+                        {
+                            isDeleting ? (
+                                <TouchableOpacity
+                                    onPress={async () => {
+                                        const accessToken = await AsyncStorage.getItem("token");
+                                        console.log(data.id)
+                                        const res_dl_pll = await DeletePlayList(data.id, accessToken);
+                                        if (res_dl_pll.ok) {
+                                            navigation.goBack();
+                                        } else {
+                                            console.log("res_dl_pll: ", res_dl_pll.status);
+                                        }
+                                    }}
+                                    style={{ justifyContent: "center", alignItems: "center", borderWidth: 2, borderColor: "#fff", borderRadius: 5, width: 100, height: 50 }}>
+                                    <Text style={{ color: "#fff", fontSize: 17, fontWeight: "bold" }}>Delete playlist</Text>
+                                </TouchableOpacity>
+                            ) : (<View></View>)
+                        }
+
+                        <TouchableOpacity
                             onPress={playTrack}
                             style={{ backgroundColor: "#31a24c", width: 60, height: 60, borderRadius: 60, justifyContent: "center", alignItems: "center" }}>
                             <Image style={{ tintColor: "#000" }} source={require("../icons/play.png")} />
