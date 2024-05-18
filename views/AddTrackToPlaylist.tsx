@@ -4,7 +4,7 @@ import { getAPI } from "../UsingAPI/CallAPI.js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {AddTrackOfPlaylist} from "../UsingAPI/PlayListAPI.js";
 import Loading from "./Loading";
-function AddTrackToPlaylist({uriTrack,setModalTrackToPlaylist}:any): React.JSX.Element {
+function AddTrackToPlaylist({uriTrack,setModalTrackToPlaylist, isRefresh, setIsRefresh}:any): React.JSX.Element {
     const [playList,setPlayList] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const getPlayList = async()=> {
@@ -50,6 +50,7 @@ function AddTrackToPlaylist({uriTrack,setModalTrackToPlaylist}:any): React.JSX.E
                         // console.log("uri_track: ",uris);
                         const response = await AddTrackOfPlaylist(pll_id,accessToken,uris);
                         if(response.ok) {
+                            setIsRefresh(!isRefresh);
                             setModalTrackToPlaylist(false);
                         }else {
                             console.log("status Add track to playlist: ",response.status);

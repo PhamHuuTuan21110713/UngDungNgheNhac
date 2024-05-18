@@ -155,7 +155,7 @@ function Home(): React.JSX.Element {
         return (
             <TouchableOpacity
                 onPress={() => {
-                    navigation.navigate("DetailArtists", { data: item });
+                    navigation.navigate("DetailArtists", { data: item ,isRefreshHomeArtist:isRefresh, setIsRefreshHomeArtist: setIsRefresh});
                 }}
                 style={{ alignItems: "center", marginRight: 20 }}>
                 <Image style={{ width: (screenWidth - 40) / 3, height: (screenWidth - 40) / 3, borderRadius: (screenWidth - 40) / 3 }} source={{ uri: item.images[0].url }} />

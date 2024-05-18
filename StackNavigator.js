@@ -11,7 +11,8 @@ import Profile from './views/Profile';
 import LikedSong from './views/LikedSong';
 import DetailPlayList from './views/DetailPlayList';
 import DetailArtists from './views/DetailArtists';
-
+import Info from './views/Info';
+import Search from './views/Search';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
@@ -70,7 +71,27 @@ const BottomTabs = () => {
 
                 )
             }} />
+            <Tab.Screen name='Search' component={Search} options={{
+                tabBarIcon: ({ focused }) => (
+                    focused ? (
+                        <LinearGradient colors={['#F86D76',  '#C24F83']} start={{x: 0, y: 1}}  end={{x: 1, y: 1}} style={{width:"70%", height:40, borderRadius:40}}>
+                            <View style={{ width: "100%", height: "100%",  justifyContent: "center", alignItems: "center" }}>
+                                <Image source={require("./icons/search.png")}
+                                    resizeMode='contain' style={{ width: 25, height: 25, tintColor:"#fff" }} />
+                            </View>
+                        </LinearGradient>
+                    ) :
+                        (
+                            <View >
+                                <Image source={require("./icons/search.png")}
+                                    resizeMode='contain' style={{ width: 25, height: 25, tintColor:"#C24F83" }} />
+                            </View>
+                        )
+
+                )
+            }} />
         </Tab.Navigator>
+        
     )
 }
 
@@ -83,6 +104,7 @@ export default Navigation = () => {
                 <Stack.Screen name="LikedSong" component={LikedSong} />
                 <Stack.Screen name= "DetailPlayList" component={DetailPlayList}/>
                 <Stack.Screen name= "DetailArtists" component={DetailArtists}/>
+                <Stack.Screen name= "Info" component={Info}/>
             </Stack.Navigator>
         </NavigationContainer>
     )

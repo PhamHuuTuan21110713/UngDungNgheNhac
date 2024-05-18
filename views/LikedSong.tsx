@@ -32,6 +32,7 @@ function LikedSong(): React.JSX.Element {
     const [modalTrackToPlaylist,setModalTrackToPlaylist] = useState(false);
     const [uriTrackToAdd,setUriTrackToAdd] = useState("");
     const [isRefresh,setIsRefresh] = useState(false);
+    const [searchedTracks, setSearchedTracks] = useState([]);
     const SongItem = ({ item, setCurrentTrack, trackIndex, savedTracks,setSavedTracks, currentList, setCurrentList, setContentTracksPlayer }: any) => {
         return (
             <TouchableOpacity
@@ -172,7 +173,15 @@ function LikedSong(): React.JSX.Element {
         await TrackPlayer.skip(0);
         await TrackPlayer.play();
     }
-
+    function handleSearch(text:any) {
+        const filteredTracks = savedTracks.filter((item) => item.track.name.toLowerCase().includes(text.toLowerCase())
+        );
+        setSearchedTracks(filteredTracks);
+    }
+    const handleInputChange = (text:any) => {
+        setInput(text);
+        handleSearch(text);
+    };
     if (isLoading) {
         return (
             <Loading />
@@ -191,7 +200,7 @@ function LikedSong(): React.JSX.Element {
                         <View style={{ backgroundColor: "#38224e", marginLeft: 10, flexDirection: "row", overflow: "hidden", paddingHorizontal: 15, flex: 1, borderWidth: 2, borderColor: "#fff", borderRadius: 20, alignItems: "center" }}>
                             <Image style={{ tintColor: "#fff" }} source={require("../icons/search.png")} />
                             <TextInput
-                                onChangeText={(text) => setInput(text)}
+                                onChangeText={(text) => handleInputChange(text)}
                                 style={{ flex: 1, color: "#fff", fontSize: 15, fontWeight: "500" }} placeholder="Find your liked song" placeholderTextColor={"#fff"} />
                         </View>
                     </View>
@@ -209,10 +218,18 @@ function LikedSong(): React.JSX.Element {
                     </View>
                     <View style={{ marginTop: 25 }}>
                         {
-                            savedTracks.map((item, index) => {
-                                return <SongItem item={item} key={index} setCurrentTrack={setCurrentTrack}
-                                    trackIndex={index} savedTracks={savedTracks} setSavedTracks={setSavedTracks} currentList={currentList} setCurrentList={setCurrentList} setContentTracksPlayer={setContentTracksPlayer} />
-                            })
+                            input === "" ?(
+                                savedTracks.map((item, index) => {
+                                    return <SongItem item={item} key={index} setCurrentTrack={setCurrentTrack}
+                                        trackIndex={index} savedTracks={savedTracks} setSavedTracks={setSavedTracks} currentList={currentList} setCurrentList={setCurrentList} setContentTracksPlayer={setContentTracksPlayer} />
+                                })
+                            ): (
+                                searchedTracks.map((item, index) => {
+                                    return <SongItem item={item} key={index} setCurrentTrack={setCurrentTrack}
+                                        trackIndex={index} savedTracks={savedTracks} setSavedTracks={setSavedTracks} currentList={currentList} setCurrentList={setCurrentList} setContentTracksPlayer={setContentTracksPlayer} />
+                                })
+                            )
+                            
                         }
                     </View>
                     <View style={{ height: 70 }}>
@@ -242,7 +259,7 @@ function LikedSong(): React.JSX.Element {
                 swipeDirection={["up", "down"]}
                 swipeThreshold={200}>
                 <ModalContent style={{ height: "100%", width: "100%", backgroundColor: "#000" }}>
-                    <AddTrackToPlaylist uriTrack={uriTrackToAdd} setModalTrackToPlaylist={setModalTrackToPlaylist}/>
+                    <AddTrackToPlaylist uriTrack={uriTrackToAdd} setModalTrackToPlaylist={setModalTrackToPlaylist} isRefresh={isRefresh} setIsRefresh={setIsRefresh}/>
                 </ModalContent>
             </BottomModal>
         </>
