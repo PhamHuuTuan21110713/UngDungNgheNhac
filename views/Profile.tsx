@@ -23,7 +23,7 @@ function Info(): React.JSX.Element {
                 onPress={() => {
                     navigation.navigate("DetailArtists", { data: item ,isRefreshHomeArtist:isRefresh, setIsRefreshHomeArtist: setIsRefresh});
                 }}
-                style={{ alignItems: "center", marginRight: 20 }}>
+                style={{ alignItems: "center", marginRight: 20,height:100 }}>
                 <Image style={{ width: (screenWidth - 40) / 3, height: (screenWidth - 40) / 3, borderRadius: (screenWidth - 40) / 3 }} source={{ uri: item.images[0].url }} />
                 <Text style={{ color: "#fff", fontSize: 15, fontWeight: "bold", marginTop: 10 }}>{item.name}</Text>
             </TouchableOpacity>
@@ -107,11 +107,10 @@ function Info(): React.JSX.Element {
                     </View>
                 </LinearGradient>
             </View>
-            <View style={{ flex: 2 }}>
+            <View style={{ flex:2}}>
                 <Text style={[styles.headerText, { padding: 10 }]}>Subcribe Artist</Text>
-                <ScrollView style={{ marginTop: 10 , height: 120}}
+                <ScrollView style={{ marginTop: 10}}
                     horizontal
-                    pagingEnabled
                     showsHorizontalScrollIndicator={false}>
                     {
                         followArtists.map((item, index) => {

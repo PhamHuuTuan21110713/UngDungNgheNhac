@@ -22,6 +22,7 @@ function Search(): React.JSX.Element {
     const [isPlaying, setIsPlaying] = useState(true);
     const { currentTrack, setCurrentTrack, currentList, setCurrentList }: any = useContext(Player);
     const [isRefresh,setIsRefresh] = useState(false);
+    const isFocused = useIsFocused();
     const handleInputChange = (text: any) => {
         setSearchInput(text);
         console.log("Search: ", searchInput);
@@ -38,6 +39,9 @@ function Search(): React.JSX.Element {
 
         }
     });
+    useEffect(()=> {
+        setSearchData([]);
+    },[isFocused])
     useTrackPlayerEvents([Event.PlaybackTrackChanged], async (event) => {
         if (event.type === Event.PlaybackTrackChanged && event.nextTrack !== null) {
             const nextTrackId = event.nextTrack;

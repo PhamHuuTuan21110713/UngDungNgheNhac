@@ -239,9 +239,10 @@ function Home(): React.JSX.Element {
                     <LinearGradient colors={["#232323", "#282828"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[style.largestContainer]}>
                         <ScrollView showsVerticalScrollIndicator={false}>
                             <View style={[style.headingContainer]}>
-                                <TouchableOpacity>
+                                {/* <TouchableOpacity>
                                     <Image source={require("../icons/menu.png")} style={{ tintColor: "#fff" }} />
-                                </TouchableOpacity>
+                                </TouchableOpacity> */}
+                               
                                 <Text style={[style.helloText]}>Hello, Love you</Text>
                                 <Image style={[style.avatar]} source={{ uri: userProfile?.images[0].url }} />
                             </View>
@@ -284,14 +285,13 @@ function Home(): React.JSX.Element {
                                 <Text style={{ color: "#fff", fontSize: 20, fontWeight: "bold", marginTop: 10 }} >Top Artists</Text>
                                 <ScrollView style={{ marginTop: 20 }}
                                     horizontal
-
                                     showsHorizontalScrollIndicator={false}>
                                     {
                                         topArtists.map((item, index) => {
                                             return <ArtistsComponent item={item} key={index} />
                                         })
                                     }
-                                </ScrollView>
+                                </ScrollView> 
                             </View>
                             <View style={{ marginTop: 10 }}>
                                 <Text style={{ color: "#fff", fontSize: 20, fontWeight: "bold", marginTop: 10 }} >Recently Played</Text>
