@@ -18,7 +18,7 @@ function isSameArray(array1:any,array2:any) {
 }
 
 function DetailArtists({ route }: any): React.JSX.Element {
-    const { data } = route.params;
+    const { data ,isRefreshHomeArtist , setIsRefreshHomeArtist} = route.params;
     const navigation = useNavigation();
     const [topTracks, setTopTracks] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -29,6 +29,7 @@ function DetailArtists({ route }: any): React.JSX.Element {
     const [isFollowing,setIsFollowing] = useState(false);
     const [modalTrackToPlaylist, setModalTrackToPlaylist] = useState(false);
     const [uriTrackToAdd, setUriTrackToAdd] = useState("");
+    const [isRefresh,setIsRefresh] = useState(false);
     useTrackPlayerEvents([Event.PlaybackState], async (event) => {
         if (event.type === Event.PlaybackState) {
             const state = await TrackPlayer.getState();
@@ -79,7 +80,7 @@ function DetailArtists({ route }: any): React.JSX.Element {
     }
     useEffect(() => {
         getTopTracks();
-    }, [currentTrack])
+    }, [isRefresh])
     // console.log("TopTrackArtisi: ",topTracks);
     const setContentTracksPlayer = async(data_saveTracks:any)=> {
         const listTracks = data_saveTracks.map((item: any, index: any) => {
@@ -201,6 +202,7 @@ function DetailArtists({ route }: any): React.JSX.Element {
                                         setIsFollowing(false);
                                         await UnfollowUser(ids,accessToken,'artist');
                                     }
+                                    setIsRefreshHomeArtist(!isRefreshHomeArtist);
                                 }}
                                 style={{marginTop:10,alignItems:"center",justifyContent:"center",width:80, height:50, backgroundColor:"#000",borderColor:"#fff",borderWidth:2,borderRadius:5}}>
                                 {
@@ -241,7 +243,7 @@ function DetailArtists({ route }: any): React.JSX.Element {
                 swipeDirection={["up", "down"]}
                 swipeThreshold={200}>
                 <ModalContent style={{ height: "100%", width: "100%", backgroundColor: "#453249" }}>
-                    <SongPlayer item={currentTrack} modalVisible={modalVisible} setModalVisible={setModalVisible} />
+                    <SongPlayer item={currentTrack} modalVisible={modalVisible} setModalVisible={setModalVisible} isRefresh={isRefresh} setIsRefresh={setIsRefresh}/>
                 </ModalContent>
 
             </BottomModal>
@@ -251,7 +253,7 @@ function DetailArtists({ route }: any): React.JSX.Element {
                 swipeDirection={["up", "down"]}
                 swipeThreshold={200}>
                 <ModalContent style={{ height: "100%", width: "100%", backgroundColor: "#000" }}>
-                    <AddTrackToPlaylist uriTrack={uriTrackToAdd} setModalTrackToPlaylist={setModalTrackToPlaylist} />
+                    <AddTrackToPlaylist uriTrack={uriTrackToAdd} setModalTrackToPlaylist={setModalTrackToPlaylist} isRefresh={isRefresh} setIsRefresh={setIsRefresh}/>
                 </ModalContent>
             </BottomModal>
        
