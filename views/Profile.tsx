@@ -81,14 +81,16 @@ function Info(): React.JSX.Element {
                         <View>
                             <Text style={styles.headerText}>Information</Text>
                         </View>
-                        <View style={styles.headerIcon}>
-                            {/* <Image source={require("../icons/setting.png")}
-                                resizeMode='contain' style={{ marginLeft: 10, width: 25, height: 25, tintColor: "#FFFFFF" }} />
-                            <Image source={require("../icons/bell.png")}
-                                resizeMode='contain' style={{ marginLeft: 10, width: 25, height: 25, tintColor: "#FFFFFF" }} /> */}
+                        <TouchableOpacity
+                            onPress={()=>{
+                                AsyncStorage.removeItem("token");
+                                AsyncStorage.removeItem("expirationDate");
+                                navigation.navigate("Login")
+                            }}
+                            style={styles.headerIcon}>
                             <Image source={require("../icons/exit.png")}
                                 resizeMode='contain' style={{ marginLeft: 10, width: 25, height: 25, tintColor: "#FFFFFF" }} />
-                        </View>
+                        </TouchableOpacity>
                     </View>
                     <View style={{ flexDirection: 'row', marginTop: 10, padding: 10 }}>
                         <Image source={{ uri: userProfile?.images[0].url }}
@@ -100,18 +102,8 @@ function Info(): React.JSX.Element {
                     </View>
                     <View style={{ flexDirection: 'row', marginTop: 5, paddingLeft: 5 }}>
                         <Text style={{fontSize: 15, color: 'white', padding: 10}}>
-
                             Folowers:  {userProfile.followers.total}
                         </Text>
-                    </View>
-                    <View style={{ paddingLeft: 100 }}>
-                        <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", width: 120, height: 50, borderRadius: 15, overflow: "hidden", borderColor: "#fff", backgroundColor: "#000", borderWidth: 2 }}
-                            onPress={() => { navigation.navigate("Info"); }}>
-
-                            <Image source={require("../icons/editing.png")} style={{ tintColor: "#FFFFFF", width: 25, height: 25 }} />
-                            <Text style={{ fontSize: 17, fontWeight: "bold", color: "#fff" }}> Edit Info</Text>
-
-                        </TouchableOpacity>
                     </View>
                 </LinearGradient>
             </View>

@@ -174,9 +174,13 @@ function LikedSong(): React.JSX.Element {
         await TrackPlayer.play();
     }
     function handleSearch(text:any) {
-        const filteredTracks = savedTracks.filter((item) => item.track.name.toLowerCase().includes(text.toLowerCase())
-        );
-        setSearchedTracks(filteredTracks);
+        if(text===""){
+            getSavedTracks();
+        }else {
+            const filteredTracks = savedTracks.filter((item) => item.track.name.toLowerCase().includes(text.toLowerCase())
+            );
+            setSavedTracks(filteredTracks);
+        }
     }
     const handleInputChange = (text:any) => {
         setInput(text);
@@ -218,17 +222,12 @@ function LikedSong(): React.JSX.Element {
                     </View>
                     <View style={{ marginTop: 25 }}>
                         {
-                            input === "" ?(
+                            
                                 savedTracks.map((item, index) => {
                                     return <SongItem item={item} key={index} setCurrentTrack={setCurrentTrack}
                                         trackIndex={index} savedTracks={savedTracks} setSavedTracks={setSavedTracks} currentList={currentList} setCurrentList={setCurrentList} setContentTracksPlayer={setContentTracksPlayer} />
                                 })
-                            ): (
-                                searchedTracks.map((item, index) => {
-                                    return <SongItem item={item} key={index} setCurrentTrack={setCurrentTrack}
-                                        trackIndex={index} savedTracks={savedTracks} setSavedTracks={setSavedTracks} currentList={currentList} setCurrentList={setCurrentList} setContentTracksPlayer={setContentTracksPlayer} />
-                                })
-                            )
+                           
                             
                         }
                     </View>
