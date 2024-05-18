@@ -3,7 +3,7 @@ import React, { useContext, useEffect, useState } from "react";
 import LinearGradient from "react-native-linear-gradient";
 import { getAPI } from "../UsingAPI/CallAPI.js";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation ,useIsFocused} from "@react-navigation/native";
 import { Player } from "./ContextTrack";
 import { BottomModal, ModalContent } from 'react-native-modals';
 import TrackPlayer, { Capability, State, usePlaybackState, useTrackPlayerEvents, Event } from 'react-native-track-player';
@@ -22,7 +22,6 @@ function Search(): React.JSX.Element {
     const [isPlaying, setIsPlaying] = useState(true);
     const { currentTrack, setCurrentTrack, currentList, setCurrentList }: any = useContext(Player);
     const [isRefresh,setIsRefresh] = useState(false);
-
     const handleInputChange = (text: any) => {
         setSearchInput(text);
         console.log("Search: ", searchInput);
@@ -39,7 +38,6 @@ function Search(): React.JSX.Element {
 
         }
     });
-
     useTrackPlayerEvents([Event.PlaybackTrackChanged], async (event) => {
         if (event.type === Event.PlaybackTrackChanged && event.nextTrack !== null) {
             const nextTrackId = event.nextTrack;
@@ -120,9 +118,7 @@ function Search(): React.JSX.Element {
                     <Image style={{ tintColor: "#fff" }} source={require("../icons/search.png")} />
                     <TextInput
                         onChangeText={(text) => handleInputChange(text)}
-                        placeholder="Find in Liked songs"
-                        placeholderTextColor={"white"}
-                        style={{ fontWeight: "500", color: "white" }}
+                        style={{ fontWeight: "500", color: "white",width:"100%" }}
                     />
                 </View>
                 <ScrollView>

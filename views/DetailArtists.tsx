@@ -100,6 +100,7 @@ function DetailArtists({ route }: any): React.JSX.Element {
         return (
             <TouchableOpacity
                 onPress={async()=> {
+                    setIsRefresh(!isRefresh);
                     if(!isSameArray(topTracks,currentList)) {
                         await setContentTracksPlayer(topTracks);
                         setCurrentList(topTracks);
@@ -154,6 +155,7 @@ function DetailArtists({ route }: any): React.JSX.Element {
         )
     }
     const playTrack = async()=> {
+        setIsRefresh(!isRefresh);
         if (topTracks.length > 0) {
             setCurrentTrack(topTracks[0]);
             if(!isSameArray(topTracks,currentList)){
